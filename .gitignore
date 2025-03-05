@@ -1,3 +1,9 @@
 *.exe
 *.dsym
 main
+game
+grid
+block
+colors
+position
+.DS_STORE
