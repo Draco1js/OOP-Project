@@ -1,18 +1,17 @@
-#ifndef FIGHTER_HPP
-#define FIGHTER_HPP
-
+#pragma once
 #include <SFML/Graphics.hpp>
 
-class Fighter {
+class Fighter
+{
 public:
     Fighter(float x, float y, bool isPlayer);
-    virtual void update() {}
-    virtual void draw(sf::RenderWindow& window);
+    virtual void update(float deltaTime) {}
+    virtual void draw(sf::RenderWindow &window);
     virtual void takeDamage(int damage);
     bool isAlive() const;
     int getHealth() const;
 
-    sf::Sprite& getSprite();
+    sf::Sprite &getSprite();
 
 protected:
     int health;
@@ -20,5 +19,3 @@ protected:
     sf::Sprite sprite;
     bool isPlayer;
 };
-
-#endif // FIGHTER_HPP

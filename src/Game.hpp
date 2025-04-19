@@ -1,6 +1,4 @@
-#ifndef GAME_HPP
-#define GAME_HPP
-
+#pragma once
 #include <SFML/Graphics.hpp>
 #include "Player.hpp"
 #include "HealthBar.hpp"
@@ -11,9 +9,8 @@ public:
     void run();
 private:
     void processEvents();
-    void update();
+    void update(float deltaTime);
     void render();
-    void handleInput();
     void checkCollisions();
 
     sf::RenderWindow window;
@@ -22,4 +19,3 @@ private:
     sf::Clock clock;
 };
 
-#endif

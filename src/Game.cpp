@@ -45,44 +45,103 @@ void printKey(const sf::Event::KeyPressed* keyPressed)
 }
 
 Game::Game() : window(sf::VideoMode(sf::Vector2u(800, 600)), "Fighting Game"),
-			   player1(100, 400, true), player2(600, 400, false),
-			   healthBar1(10, 10, player1.getHealth()), healthBar2(10, 50, player2.getHealth())
+               player1(100, 400, true), player2(600, 400, false),
+               healthBar1(window.getSize().x /2 - 350, 10, player1.getHealth()), 
+               healthBar2(window.getSize().x /2 + 150, 10, player2.getHealth())
 {
 	window.setFramerateLimit(60);
 	std::cout << "Game initialized. Window created with size: " << window.getSize().x << "x" << window.getSize().y << std::endl
 			  << std::flush;
+	
+	// Store the result of setActive to avoid the warning
+	bool activated = window.setActive(true);
+	if (!activated) {
+		std::cerr << "Warning: Failed to activate window context" << std::endl;
+	}
 }
 
 void Game::run()
 {
-	while (window.isOpen())
-	{
-		processEvents();
-		update();
-		render();
-	}
+    while (window.isOpen())
+    {
+        processEvents();
+        
+        // Fixed time step for simplicity
+        float deltaTime = 1.0f/60.0f;
+        
+        // Update game state
+        player1.update(deltaTime);
+        player2.update(deltaTime);
+        healthBar1.update(player1.getHealth());
+        healthBar2.update(player2.getHealth());
+        
+        // Render
+        render();
+    }
 }
 
 void Game::processEvents()
 {
+	// Process one-time events
 	while (const auto event = window.pollEvent())
 	{
 		if (event->is<sf::Event::Closed>())
 		{
 			window.close();
 		}
-		// Debug keyboard events
 		else if (const auto *keyPressed = event->getIf<sf::Event::KeyPressed>())
 		{
 			printKey(keyPressed);
+			
+			// Handle key presses
+			switch (keyPressed->code)
+			{
+				case sf::Keyboard::Key::W:
+				player1.jump();
+				break;
+				case sf::Keyboard::Key::A:
+				player1.moveLeft();
+				break;
+				case sf::Keyboard::Key::D:
+				player1.moveRight();
+				break;
+				case sf::Keyboard::Key::Up:
+				player2.jump();
+				break;
+				case sf::Keyboard::Key::Left:
+					player2.moveLeft();
+					break;
+				case sf::Keyboard::Key::Right:
+					player2.moveRight();
+					break;
+				default:
+					break;
+			}
+		}
+		else if (const auto *keyReleased = event->getIf<sf::Event::KeyReleased>())
+		{
+			// Handle key releases for movement
+			switch (keyReleased->code)
+			{
+				case sf::Keyboard::Key::A:
+				case sf::Keyboard::Key::D:
+					player1.stopMovingHorizontal();
+					break;
+				case sf::Keyboard::Key::Left:
+				case sf::Keyboard::Key::Right:
+					player2.stopMovingHorizontal();
+					break;
+				default:
+					break;
+			}
 		}
 	}
 }
 
-void Game::update()
+void Game::update(float deltaTime)
 {
-	player1.update();
-	player2.update();
+	player1.update(deltaTime);
+	player2.update(deltaTime);
 	healthBar1.update(player1.getHealth());
 	healthBar2.update(player2.getHealth());
 	checkCollisions();
@@ -91,22 +150,13 @@ void Game::update()
 void Game::render()
 {
 	window.clear(sf::Color::Black);
-
-	// std::cout << "Rendering frame..." << std::endl;
 	
-	// // Debug: Print player positions before drawing
-	// std::cout << "Player1 position before draw: " << player1.getSprite().getPosition().x << ", " 
-	// 		  << player1.getSprite().getPosition().y << std::endl;
-	// std::cout << "Player2 position before draw: " << player2.getSprite().getPosition().x << ", " 
-	// 		  << player2.getSprite().getPosition().y << std::endl;
-
 	player1.draw(window);
 	player2.draw(window);
 	healthBar1.draw(window);
 	healthBar2.draw(window);
 
 	window.display();
-	std::cout << "Frame displayed" << std::endl << std::flush;
 }
 
 void Game::checkCollisions()
