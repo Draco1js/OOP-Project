@@ -1,4 +1,6 @@
-#include <SFML/Graphics.hpp>
+#include<SFML/Graphics.hpp>
+// Then switch back to the standard include once IntelliSense is working
+// #include <SFML/Graphics.hpp>
 
 int main()
 {
