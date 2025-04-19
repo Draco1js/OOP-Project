@@ -1,9 +1,6 @@
-*.exe
-*.dsym
-main
-game
-grid
-block
-colors
-position
-.DS_STORE
+build
+out
+.cache
+.idea
+.vs
+.vscode

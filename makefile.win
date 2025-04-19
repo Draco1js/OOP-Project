@@ -1,7 +1,0 @@
-include Makefile  # Include the original makefile
-
-PLATFORM_OS := WINDOWS
-CC := x86_64-w64-mingw32-g++
-LDLIBS := -lraylib -lopengl32 -lgdi32 -lwinmm -static
-CFLAGS += -mwindows
-EXT := .exe
