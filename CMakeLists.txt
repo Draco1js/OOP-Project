@@ -19,6 +19,9 @@ add_executable(main
     src/Fighter.cpp
     src/Player.cpp
     src/HealthBar.cpp
+    src/Animation.cpp
+    src/Damage.cpp
+    src/Attack.cpp
 )
 target_compile_features(main PRIVATE cxx_std_17)
 target_link_libraries(main PRIVATE SFML::Graphics)

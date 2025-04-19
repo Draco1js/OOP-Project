@@ -97,22 +97,40 @@ void Game::processEvents()
 			switch (keyPressed->code)
 			{
 				case sf::Keyboard::Key::W:
-				player1.jump();
-				break;
+					player1.jump();
+					break;
 				case sf::Keyboard::Key::A:
-				player1.moveLeft();
-				break;
+					player1.moveLeft();
+					break;
 				case sf::Keyboard::Key::D:
-				player1.moveRight();
-				break;
+					player1.moveRight();
+					break;
+				case sf::Keyboard::Key::Q:
+					player1.punch();
+					break;
+				case sf::Keyboard::Key::E:
+					player1.kick();
+					break;
+				case sf::Keyboard::Key::S:
+					player1.block();
+					break;
 				case sf::Keyboard::Key::Up:
-				player2.jump();
-				break;
+					player2.jump();
+					break;
 				case sf::Keyboard::Key::Left:
 					player2.moveLeft();
 					break;
 				case sf::Keyboard::Key::Right:
 					player2.moveRight();
+					break;
+				case sf::Keyboard::Key::Numpad1:
+					player2.punch();
+					break;
+				case sf::Keyboard::Key::Numpad2:
+					player2.kick();
+					break;
+				case sf::Keyboard::Key::Down:
+					player2.block();
 					break;
 				default:
 					break;
