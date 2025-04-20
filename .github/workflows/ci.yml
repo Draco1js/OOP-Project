@@ -47,12 +47,27 @@ jobs:
     - name: Fix macOS libraries
       if: runner.os == 'macOS'
       run: |
+        # Find where the executable is located
+        find build -name "main" -type f -o -name "*.app" -type d
+        
         # For shared library builds, copy the SFML dylibs to the same directory as the executable
         if [[ "${{ matrix.config.name }}" == "Shared" ]]; then
-          mkdir -p build/bin/libs
-          cp build/_deps/sfml-build/lib/*.dylib build/bin/
-          # Fix the rpath in the executable
-          install_name_tool -add_rpath @executable_path/ build/bin/main
+          # Check if we're using a bundle
+          if [ -d "build/bin/main.app" ]; then
+            # Copy dylibs to the app bundle
+            mkdir -p build/bin/main.app/Contents/Frameworks
+            cp build/_deps/sfml-build/lib/*.dylib build/bin/main.app/Contents/Frameworks/
+            # Fix the rpath in the executable
+            install_name_tool -add_rpath @executable_path/../Frameworks build/bin/main.app/Contents/MacOS/main
+          else
+            # Regular executable
+            mkdir -p build/bin/libs
+            cp build/_deps/sfml-build/lib/*.dylib build/bin/
+            # Fix the rpath in the executable if it exists
+            if [ -f "build/bin/main" ]; then
+              install_name_tool -add_rpath @executable_path/ build/bin/main
+            fi
+          fi
         fi
 
     - name: Create artifact archive
