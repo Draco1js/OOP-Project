@@ -4,7 +4,8 @@
 #include <memory>
 #include <iostream>
 
-class Player : public Fighter {
+class Player : public Fighter
+{
 public:
     Player(float x, float y, bool isPlayer);
     void update(float deltaTime) override;
@@ -21,15 +22,15 @@ public:
     void block();
 
     // Check if current attack hits another fighter
-    bool checkAttackHit(Fighter& target);
+    bool checkAttackHit(Fighter &target);
 
 private:
     // Physics properties
     sf::Vector2f velocity{0.0f, 0.0f};
-    float gravity = 0.5f;
-    float jumpForce = -12.0f;
-    float moveSpeed = 100.0f;
-    float groundLevel = 400.0f; // Default ground level
+    float gravity = 0.8f;
+    float jumpForce = -18.0f;
+    float moveSpeed = 300.0f;  // Adjusted to a more reasonable value
+    float groundLevel = 400.0f;
     bool isOnGround = true;
 
     // State flags
@@ -39,4 +40,3 @@ private:
     // Current attack being executed
     std::unique_ptr<Attack> currentAttack;
 };
-

@@ -58,3 +58,7 @@ if(APPLE)
     # Make sure the executable is built as a GUI application
     target_link_options(main PRIVATE -Wl,-sectcreate,__TEXT,__info_plist,${CMAKE_CURRENT_SOURCE_DIR}/Info.plist)
 endif()
+
+add_executable(minimal_test src/minimal_test.cpp)
+target_link_libraries(minimal_test PRIVATE SFML::Graphics)
+target_compile_features(minimal_test PRIVATE cxx_std_17)

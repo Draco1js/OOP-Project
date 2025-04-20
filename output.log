@@ -1,0 +1,11 @@
+Fighter created at position: 100, 400
+Fighter created at position: 600, 400
+Game initialized. Window created with size: 800x600
+2025-04-20 16:28:08.080 main[92661:4724811] +[IMKClient subclass]: chose IMKClient_Modern
+2025-04-20 16:28:08.080 main[92661:4724811] +[IMKInputSession subclass]: chose IMKInputSession_Modern
+Key pressed: D
+Key pressed: W
+Key pressed: Other (16)
+Key pressed: A
+Key pressed: Other (132)
+Key pressed: Right Arrow
