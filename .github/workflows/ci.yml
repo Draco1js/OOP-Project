@@ -47,10 +47,14 @@ jobs:
     - name: Create artifact archive
       run: |
         cd build/bin
+        # Create a filename without spaces
+        FILENAME="${{ matrix.platform.name }}-${{ matrix.config.name }}"
+        FILENAME_SAFE=$(echo "$FILENAME" | tr ' ' '_')
+        
         if [ "${{ runner.os }}" == "Windows" ]; then
-          7z a ../../${{ matrix.platform.name }}-${{ matrix.config.name }}.zip .
+          7z a "../../${FILENAME_SAFE}.zip" .
         else
-          tar -czvf ../../${{ matrix.platform.name }}-${{ matrix.config.name }}.tar.gz .
+          tar -czvf "../../${FILENAME_SAFE}.tar.gz" .
         fi
         cd ../..
 
