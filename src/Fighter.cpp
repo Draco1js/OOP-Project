@@ -3,10 +3,9 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 
-
 Fighter::Fighter(float x, float y, bool isPlayer) 
     : health(100), defense(10), isPlayer(isPlayer), currentState(FighterState::Idle), 
-      facingRight(isPlayer), fallbackTexture(), sprite(fallbackTexture)
+      facingRight(isPlayer), fallbackTexture(), sprite(fallbackTexture), currentAnimationName("idle")
 {
     // Create a fallback texture with actual content
     if (!fallbackTexture.loadFromFile("assets/sprites/player1.png")) {
@@ -15,6 +14,9 @@ Fighter::Fighter(float x, float y, bool isPlayer)
     
     // Update sprite position
     sprite.setPosition({x, y});
+    
+    // Scale down the sprite to make it smaller on screen
+    sprite.setScale({0.5f, 0.5f});
     
     // Load character animations
     loadAnimations(isPlayer ? "Iori" : "Ryo");
@@ -27,40 +29,28 @@ Fighter::Fighter(float x, float y, bool isPlayer)
 
 void Fighter::update(float deltaTime)
 {
-    // Update current animation
-    if (animations.count(currentState) > 0) {
-        animations[currentState].update(deltaTime);
-        
-        // Store current position and scale before updating sprite
-        sf::Vector2f position = sprite.getPosition();
-        
-        // Get current sprite from animation
-        sf::Sprite& animSprite = animations[currentState].getCurrentSprite();
-        
-        // Copy texture and rectangle from animation sprite
-        const sf::Texture& texture = animSprite.getTexture();
-        sprite.setTexture(texture, true);
-        sprite.setTextureRect(animSprite.getTextureRect());
-        
-        // Apply flip if needed
-        if (!facingRight) {
-            sprite.setScale({-1.0f, 1.0f});
-            // Adjust position for flipped sprite
-            sf::FloatRect bounds = sprite.getLocalBounds();
-            sprite.setOrigin({bounds.size.x, 0});
-        } else {
-            sprite.setScale({1.0f, 1.0f});
-            sprite.setOrigin({0, 0});
-        }
-        
-        // Restore position
-        sprite.setPosition(position);
-        
-        // Check if non-looping animation is finished
-        if (animations[currentState].isFinished()) {
-            setAnimation(FighterState::Idle);
-        }
+    // Update current animation and get the current frame rect
+    sf::IntRect frameRect = AnimationManager::update(currentAnimationName, sprite);
+    
+    // Apply the frame rect to crop the sprite
+    sprite.setTextureRect(frameRect);
+    
+    // Store current position
+    sf::Vector2f position = sprite.getPosition();
+    
+    // Apply flip if needed
+    if (!facingRight) {
+        sprite.setScale({-0.5f, 0.5f});  // Maintain the 0.5 scale while flipping
+        // Adjust position for flipped sprite
+        sf::FloatRect bounds = sprite.getLocalBounds();
+        sprite.setOrigin({bounds.size.x, 0});
+    } else {
+        sprite.setScale({0.5f, 0.5f});  // Maintain the 0.5 scale
+        sprite.setOrigin({0, 0});
     }
+    
+    // Restore position
+    sprite.setPosition(position);
 }
 
 void Fighter::takeDamage(int rawDamage)
@@ -167,69 +157,167 @@ void Fighter::draw(sf::RenderWindow& window)
     window.draw(sprite);
 }
 
+void Fighter::setupAnimation(sf::Texture& texture, const std::string& animationName,
+                            const std::string& filePath, sf::Vector2i frameCount,
+                            sf::Vector2i frameSize, sf::Vector2i startPosition, int frequency)
+{
+    if (!texture.loadFromFile(filePath)) {
+        std::cerr << "Failed to load texture: " << filePath << std::endl;
+    } else {
+        // Set the texture rect to crop the sprite to the correct size
+        sprite.setTextureRect(sf::IntRect({0, 0}, frameSize));
+        
+        // Add the animation to the manager
+        AnimationManager::addAnimation(animationName, texture, frameCount, frameSize, startPosition, frequency);
+    }
+}
+
 void Fighter::loadAnimations(const std::string& characterName)
 {
-    std::string basePath = "assets/sprites/Assests/" + characterName + "/";
+    std::string spritesheetPath = "assets/sprites/" + characterName + ".png";
     
-    // Load idle animation
-    Animation idleAnim(0.1f);
-    idleAnim.loadFromFiles(basePath + "Idle*.png", 
-        characterName == "Iori" ? 9 : 4);
-    animations[FighterState::Idle] = idleAnim;
+    // Define frame sizes and counts for each character
+    sf::Vector2i frameSize;
+    std::map<FighterState, sf::Vector2i> frameCounts;
+    std::map<FighterState, sf::Vector2i> startPositions;
     
-    // Load walk forward animation
-    Animation walkForwardAnim(0.1f);
-    walkForwardAnim.loadFromFiles(basePath + "WalkFront*.png", 
-        characterName == "Iori" ? 10 : 6);
-    animations[FighterState::WalkForward] = walkForwardAnim;
+    if (characterName == "Iori") {
+        frameSize = {300, 300}; // Adjust based on actual spritesheet
+        
+        // Define frame counts for each animation
+        frameCounts[FighterState::Idle] = {9, 1};
+        frameCounts[FighterState::WalkForward] = {10, 1};
+        frameCounts[FighterState::WalkBackward] = {9, 1};
+        frameCounts[FighterState::Jump] = {9, 1};
+        frameCounts[FighterState::Punch] = {9, 1};
+        frameCounts[FighterState::Kick] = {10, 1};
+        frameCounts[FighterState::Block] = {7, 1};
+        frameCounts[FighterState::Dead] = {10, 1};
+        
+        // Define starting positions in the spritesheet
+        startPositions[FighterState::Idle] = {0, 0};
+        startPositions[FighterState::WalkForward] = {0, 300};
+        startPositions[FighterState::WalkBackward] = {0, 600};
+        startPositions[FighterState::Jump] = {0, 900};
+        startPositions[FighterState::Punch] = {0, 1200};
+        startPositions[FighterState::Kick] = {0, 1500};
+        startPositions[FighterState::Block] = {0, 1800};
+        startPositions[FighterState::Dead] = {0, 2100};
+    } else { // Ryo
+        frameSize = {300, 300}; // Adjust based on actual spritesheet
+        
+        // Define frame counts for each animation
+        frameCounts[FighterState::Idle] = {4, 1};
+        frameCounts[FighterState::WalkForward] = {6, 1};
+        frameCounts[FighterState::WalkBackward] = {5, 1};
+        frameCounts[FighterState::Jump] = {3, 1};
+        frameCounts[FighterState::Punch] = {9, 1};
+        frameCounts[FighterState::Kick] = {8, 1};
+        frameCounts[FighterState::Block] = {3, 1};
+        frameCounts[FighterState::Dead] = {4, 1};
+        
+        // Define starting positions in the spritesheet
+        startPositions[FighterState::Idle] = {0, 0};
+        startPositions[FighterState::WalkForward] = {0, 300};
+        startPositions[FighterState::WalkBackward] = {0, 600};
+        startPositions[FighterState::Jump] = {0, 900};
+        startPositions[FighterState::Punch] = {0, 1200};
+        startPositions[FighterState::Kick] = {0, 1500};
+        startPositions[FighterState::Block] = {0, 1800};
+        startPositions[FighterState::Dead] = {0, 2100};
+    }
     
-    // Load walk backward animation
-    Animation walkBackwardAnim(0.1f);
-    walkBackwardAnim.loadFromFiles(basePath + "WalkBack*.png", 
-        characterName == "Iori" ? 9 : 5);
-    animations[FighterState::WalkBackward] = walkBackwardAnim;
-    
-    // Load jump animation
-    Animation jumpAnim(0.1f);
-    jumpAnim.loadFromFiles(basePath + "Jump*.png", 
-        characterName == "Iori" ? 9 : 3);
-    jumpAnim.setLooping(false);
-    animations[FighterState::Jump] = jumpAnim;
-    
-    // Load punch animation
-    Animation punchAnim(0.07f);
-    punchAnim.loadFromFiles(basePath + "Punch*.png", 
-        characterName == "Iori" ? 9 : 9);
-    punchAnim.setLooping(false);
-    animations[FighterState::Punch] = punchAnim;
-    
-    // Load kick animation
-    Animation kickAnim(0.07f);
-    kickAnim.loadFromFiles(basePath + "Kick*.png", 
-        characterName == "Iori" ? 10 : 8);
-    kickAnim.setLooping(false);
-    animations[FighterState::Kick] = kickAnim;
-    
-    // Load block animation
-    Animation blockAnim(0.1f);
-    blockAnim.loadFromFiles(basePath + "Block*.png", 
-        characterName == "Iori" ? 7 : 3);
-    blockAnim.setLooping(false);
-    animations[FighterState::Block] = blockAnim;
-    
-    // Load dead animation
-    Animation deadAnim(0.15f);
-    deadAnim.loadFromFiles(basePath + "Dead*.png", 
-        characterName == "Iori" ? 10 : 4);
-    deadAnim.setLooping(false);
-    animations[FighterState::Dead] = deadAnim;
+    // Setup animations for each state with slower frequencies (higher values = slower animations)
+    setupAnimation(idleTexture, "idle", spritesheetPath, 
+                  frameCounts[FighterState::Idle], frameSize, 
+                  startPositions[FighterState::Idle], 20); // Increased from 10 to 20
+                  
+    setupAnimation(walkForwardTexture, "walkForward", spritesheetPath, 
+                  frameCounts[FighterState::WalkForward], frameSize, 
+                  startPositions[FighterState::WalkForward], 20); // Increased from 10 to 20
+                  
+    setupAnimation(walkBackwardTexture, "walkBackward", spritesheetPath, 
+                  frameCounts[FighterState::WalkBackward], frameSize, 
+                  startPositions[FighterState::WalkBackward], 20); // Increased from 10 to 20
+                  
+    setupAnimation(jumpTexture, "jump", spritesheetPath, 
+                  frameCounts[FighterState::Jump], frameSize, 
+                  startPositions[FighterState::Jump], 20); // Increased from 10 to 20
+                  
+    setupAnimation(punchTexture, "punch", spritesheetPath, 
+                  frameCounts[FighterState::Punch], frameSize, 
+                  startPositions[FighterState::Punch], 15); // Increased from 7 to 15
+                  
+    setupAnimation(kickTexture, "kick", spritesheetPath, 
+                  frameCounts[FighterState::Kick], frameSize, 
+                  startPositions[FighterState::Kick], 15); // Increased from 7 to 15
+                  
+    setupAnimation(blockTexture, "block", spritesheetPath, 
+                  frameCounts[FighterState::Block], frameSize, 
+                  startPositions[FighterState::Block], 20); // Increased from 10 to 20
+                  
+    setupAnimation(deadTexture, "dead", spritesheetPath, 
+                  frameCounts[FighterState::Dead], frameSize, 
+                  startPositions[FighterState::Dead], 25); // Increased from 15 to 25
+                  
+    // Set initial texture
+    sprite.setTexture(idleTexture);
+}
+
+std::string Fighter::getAnimationName(FighterState state) const
+{
+    switch (state) {
+        case FighterState::Idle: return "idle";
+        case FighterState::WalkForward: return "walkForward";
+        case FighterState::WalkBackward: return "walkBackward";
+        case FighterState::Jump: return "jump";
+        case FighterState::Punch: return "punch";
+        case FighterState::Kick: return "kick";
+        case FighterState::Block: return "block";
+        case FighterState::Dead: return "dead";
+        default: return "idle";
+    }
 }
 
 void Fighter::setAnimation(FighterState state)
 {
-    if (currentState != state && animations.count(state) > 0) {
+    if (currentState != state) {
         currentState = state;
-        animations[currentState].reset();
+        currentAnimationName = getAnimationName(state);
+        
+        // Set the appropriate texture based on the state
+        switch (state) {
+            case FighterState::Idle:
+                sprite.setTexture(idleTexture);
+                break;
+            case FighterState::WalkForward:
+                sprite.setTexture(walkForwardTexture);
+                break;
+            case FighterState::WalkBackward:
+                sprite.setTexture(walkBackwardTexture);
+                break;
+            case FighterState::Jump:
+                sprite.setTexture(jumpTexture);
+                break;
+            case FighterState::Punch:
+                sprite.setTexture(punchTexture);
+                break;
+            case FighterState::Kick:
+                sprite.setTexture(kickTexture);
+                break;
+            case FighterState::Block:
+                sprite.setTexture(blockTexture);
+                break;
+            case FighterState::Dead:
+                sprite.setTexture(deadTexture);
+                break;
+            default:
+                sprite.setTexture(idleTexture);
+                break;
+        }
+        
+        // Reset the animation
+        AnimationManager::resetAnimationIndex(currentAnimationName);
     }
 }
 

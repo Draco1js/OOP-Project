@@ -1,5 +1,8 @@
 # CMake SFML Project Template
 
+
+Important AnimationManager.cpp reference: `https://github.com/Jfeatherstone/SFMLAnimation`
+
 This repository template should allow for a fast and hassle-free kick start of your next SFML project using CMake.
 Thanks to [GitHub's nature of templates](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template), you can fork this repository without inheriting its Git history.
 
