@@ -50,7 +50,25 @@ protected:
     bool facingRight;
 
     FighterState currentState;
-    std::map<FighterState, Animation> animations;
+    std::string currentAnimationName;
+    
+    // Textures for each animation state
+    sf::Texture idleTexture;
+    sf::Texture walkForwardTexture;
+    sf::Texture walkBackwardTexture;
+    sf::Texture jumpTexture;
+    sf::Texture punchTexture;
+    sf::Texture kickTexture;
+    sf::Texture blockTexture;
+    sf::Texture deadTexture;
+    
+    // Helper method to set up animations
+    void setupAnimation(sf::Texture& texture, const std::string& animationName,
+                        const std::string& filePath, sf::Vector2i frameCount,
+                        sf::Vector2i frameSize, sf::Vector2i startPosition, int frequency);
+    
+    // Helper to get animation name from state
+    std::string getAnimationName(FighterState state) const;
 
 private:
     void loadAnimations(const std::string &characterName);

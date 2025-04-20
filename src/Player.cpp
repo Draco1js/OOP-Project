@@ -38,7 +38,7 @@ void Player::update(float deltaTime)
     // Update sprite position
     sprite.setPosition(position);
     
-    // Update animation state based on velocity
+    // Update animation state based on velocity and current state
     if (!isAttacking && !isBlocking && isOnGround) {
         if (velocity.x > 0) {
             setAnimation(FighterState::WalkForward);
@@ -55,9 +55,15 @@ void Player::update(float deltaTime)
     Fighter::update(deltaTime);
     
     // Reset attack/block flags if animation finished
-    if (animations[currentState].isFinished()) {
-        isAttacking = false;
-        isBlocking = false;
+    if (AnimationManager::isAnimationFinished(currentAnimationName)) {
+        if (isAttacking) {
+            isAttacking = false;
+            setAnimation(FighterState::Idle);
+        }
+        if (isBlocking) {
+            isBlocking = false;
+            setAnimation(FighterState::Idle);
+        }
     }
 }
 
@@ -96,7 +102,7 @@ void Player::punch()
 	if (isOnGround && !isAttacking && !isBlocking) {
 		isAttacking = true;
 		setAnimation(FighterState::Punch);
-		 // Create and store the attack (light punch by default)
+		// Create and store the attack (medium punch by default)
 		currentAttack = std::make_unique<Attack>(FighterState::Punch, AttackStrength::Medium);
 		// Stop horizontal movement during attack
 		velocity.x = 0;

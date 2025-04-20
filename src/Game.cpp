@@ -185,3 +185,13 @@ void Game::checkCollisions()
 		// Handle collisions, maybe trigger attack
 	}
 }
+
+Game::~Game()
+{
+    // Make sure to clean up any SFML resources before exiting
+    window.close();
+    
+    // Reset any static resources
+    // This might help with the mutex issue
+    AnimationManager::cleanup();
+}
