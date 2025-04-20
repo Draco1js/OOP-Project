@@ -1,6 +1,12 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main, master ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, master ]
 
 defaults:
   run:
@@ -38,8 +44,46 @@ jobs:
     - name: Build
       run: cmake --build build --config Release
 
+    - name: Create artifact archive
+      run: |
+        cd build/bin
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          7z a ../../${{ matrix.platform.name }}-${{ matrix.config.name }}.zip .
+        else
+          tar -czvf ../../${{ matrix.platform.name }}-${{ matrix.config.name }}.tar.gz .
+        fi
+        cd ../..
+
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.platform.name }}-${{ matrix.config.name }}
         path: build/bin
+
+  release:
+    name: Create Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/**/*.zip
+            artifacts/**/*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
