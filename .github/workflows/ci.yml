@@ -44,6 +44,17 @@ jobs:
     - name: Build
       run: cmake --build build --config Release
 
+    - name: Fix macOS libraries
+      if: runner.os == 'macOS'
+      run: |
+        # For shared library builds, copy the SFML dylibs to the same directory as the executable
+        if [[ "${{ matrix.config.name }}" == "Shared" ]]; then
+          mkdir -p build/bin/libs
+          cp build/_deps/sfml-build/lib/*.dylib build/bin/
+          # Fix the rpath in the executable
+          install_name_tool -add_rpath @executable_path/ build/bin/main
+        fi
+
     - name: Create artifact archive
       run: |
         cd build/bin

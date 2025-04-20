@@ -28,7 +28,7 @@ private:
     sf::Vector2f velocity{0.0f, 0.0f};
     float gravity = 0.5f;
     float jumpForce = -12.0f;
-    float moveSpeed = 15.0f;
+    float moveSpeed = 100.0f;
     float groundLevel = 400.0f; // Default ground level
     bool isOnGround = true;
 
