@@ -9,6 +9,7 @@
 - [ ] Player 0 (blue) wins every time
 - [ ] Defence mechanism needs to be fixed
 - [ ] Duck-punch does not work 
+- [ ] when attacking top-left text should be removed. 
 
 ### Members: 
 - Aayan Sultan (24K-2015)
