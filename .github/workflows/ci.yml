@@ -83,18 +83,31 @@ jobs:
 
     - name: Copy assets to build directory
       run: |
-        mkdir -p build/bin/assets
-        cp -r assets/* build/bin/assets/ 2>/dev/null || :
+        # Copy assets directory to the same location as the executable
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          # For Windows, copy assets next to the .exe
+          mkdir -p build/bin
+          cp -r assets build/bin/
+        else
+          # For Linux/macOS, copy assets next to the executable
+          mkdir -p build/bin
+          cp -r assets build/bin/
+        fi
+        
+        # List directories to verify
+        echo "Asset directories:"
+        ls -la build/bin/assets 2>/dev/null || echo "No build/bin/assets"
       shell: bash
 
     - name: Create artifact archive
       run: |
+        # Make sure executables are in build/bin
         mkdir -p build/bin
         cp *.exe build/bin/ 2>/dev/null || :
         cp game build/bin/ 2>/dev/null || :
         cp main build/bin/ 2>/dev/null || :
         
-        # Create platform-specific archive
+        # Create platform-specific archive from the bin directory
         cd build
         FILENAME="${{ matrix.platform.name }}"
         FILENAME_SAFE=$(echo "$FILENAME" | tr ' ' '_')
