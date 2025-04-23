@@ -81,6 +81,12 @@ jobs:
         fi
       shell: bash
 
+    - name: Copy assets to build directory
+      run: |
+        mkdir -p build/bin/assets
+        cp -r assets/* build/bin/assets/ 2>/dev/null || :
+      shell: bash
+
     - name: Create artifact archive
       run: |
         mkdir -p build/bin
@@ -89,16 +95,16 @@ jobs:
         cp main build/bin/ 2>/dev/null || :
         
         # Create platform-specific archive
-        cd build/bin
+        cd build
         FILENAME="${{ matrix.platform.name }}"
         FILENAME_SAFE=$(echo "$FILENAME" | tr ' ' '_')
         
         if [ "${{ runner.os }}" == "Windows" ]; then
-          7z a "../../${FILENAME_SAFE}.zip" .
+          7z a "../${FILENAME_SAFE}.zip" bin
         else
-          tar -czvf "../../${FILENAME_SAFE}.tar.gz" .
+          tar -czvf "../${FILENAME_SAFE}.tar.gz" bin
         fi
-        cd ../..
+        cd ..
       shell: bash
 
     - name: Upload build artifacts
