@@ -1,8 +1,12 @@
+*.exe
+*.dsym
+main
+game
+player
+.DS_Store
 build
 out
 .cache
 .idea
-.vs
-.vscode
 .DS_Store
 **/.DS_Store

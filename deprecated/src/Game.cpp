@@ -1,118 +1,277 @@
-#include "Game.h"
+#include "Game.hpp"
+#include <iostream>
+#include <fstream>
 
-// Constructor
-Game::Game() : exitGame(false), currentState(GameState::MENU) {}
-
-// Destructor
-Game::~Game() {}
-
-// Function Defination Of Initialize Method
-void Game::Initialize()
+void printKey(const sf::Event::KeyPressed *keyPressed)
 {
-    InitWindow(screenWidth, screenHeight, "2D Fighting Game");      //InitWindow:  Initialize window and OpenGL context
-    SetExitKey(KEY_NULL);  // Disable automatic exit with ESC key
-    SetTargetFPS(60);       //SetTargetFPS: Set target FPS (maximum)
+	std::string keyName = "Unknown";
+	switch (keyPressed->code)
+	{
+	case sf::Keyboard::Key::W:
+		keyName = "W";
+		break;
+	case sf::Keyboard::Key::A:
+		keyName = "A";
+		break;
+	case sf::Keyboard::Key::S:
+		keyName = "S";
+		break;
+	case sf::Keyboard::Key::D:
+		keyName = "D";
+		break;
+	case sf::Keyboard::Key::Up:
+		keyName = "Up Arrow";
+		break;
+	case sf::Keyboard::Key::Down:
+		keyName = "Down Arrow";
+		break;
+	case sf::Keyboard::Key::Left:
+		keyName = "Left Arrow";
+		break;
+	case sf::Keyboard::Key::Right:
+		keyName = "Right Arrow";
+		break;
+	case sf::Keyboard::Key::Space:
+		keyName = "Space";
+		break;
+	case sf::Keyboard::Key::Escape:
+		keyName = "Escape";
+		break;
+	default:
+		keyName = "Other (" + std::to_string(static_cast<int>(keyPressed->scancode)) + ")";
+	}
+
+	std::cout << "Key pressed: " << keyName << std::endl
+			  << std::flush;
 }
 
-// Function Defination Of RunGameLoop Method
-void Game::RunGameLoop()
+Game::Game() : window(sf::VideoMode({800, 600}), "Fighting Game", sf::Style::Default),
+			   player1(100, 400, true),
+			   player2(600, 400, false),
+			   healthBar1(window.getSize().x / 2 - 350, 10, player1.getHealth()),
+			   healthBar2(window.getSize().x / 2 + 150, 10, player2.getHealth()),
+			   backgroundTexture(),
+			   backgroundSprite(backgroundTexture) // Initialize with empty texture
 {
-    while (!WindowShouldClose() && !exitGame)       //WindowShouldClose: Check if application should close (KEY_ESCAPE pressed or windows close icon clicked)
-    {
-        // Update
-        switch (currentState)       // Takes Current state, then selects appropriate status and updates it
-        {
-        case GameState::MENU:
-            UpdateMenu();
-            break;
-        case GameState::GAMEPLAY:
-            UpdateGameplay();
-            break;
-        case GameState::GAMEOVER:
-            UpdateGameOver();
-            break;
-        }
+	std::cout << "Game constructor started" << std::endl;
 
-        // Draw
-        BeginDrawing();     // BeginDrawing: Setup canvas (framebuffer) to start drawing
-        ClearBackground(RAYWHITE);      //ClearBackground: Clear image background with given color
+	try
+	{
+		// Set window properties
+		window.setFramerateLimit(60);
+		std::cout << "Framerate set to 60" << std::endl;
 
-        switch (currentState)
-        {
-        case GameState::MENU:       // Takes Current state, then selects appropriate status and draws it
-            DrawMenu();
-            break;
-        case GameState::GAMEPLAY:
-            DrawGameplay();
-            break;
-        case GameState::GAMEOVER:
-            DrawGameOver();
-            break;
-        }
+		// Load background texture
+		std::cout << "Attempting to load background texture..." << std::endl;
+		if (!backgroundTexture.loadFromFile("assets/sprites/insbg.gif"))
+		{
+			std::cout << "ERROR: Failed to load background image!" << std::endl;
 
-        EndDrawing();
-    }
+			// Create a fallback texture - solid color
+			backgroundTexture.resize({800, 600});
+			sf::Image img;
+			img.resize({800, 600}, sf::Color(50, 50, 100));
+			backgroundTexture.update(img);
+			std::cout << "Created fallback texture" << std::endl;
+		}
+		else
+		{
+			std::cout << "SUCCESS: Background image loaded" << std::endl;
+		}
+
+		// Now set the texture to the sprite
+		backgroundSprite.setTexture(backgroundTexture);
+
+		// Scale the background to fit the window
+		float scaleX = static_cast<float>(window.getSize().x) / backgroundTexture.getSize().x;
+		float scaleY = static_cast<float>(window.getSize().y) / backgroundTexture.getSize().y;
+		backgroundSprite.setScale({scaleX, scaleY});
+
+		std::cout << "Background scaled: " << scaleX << " x " << scaleY << std::endl;
+		std::cout << "Game constructor completed successfully" << std::endl;
+	}
+	catch (const std::exception &e)
+	{
+		std::cerr << "EXCEPTION in Game constructor: " << e.what() << std::endl;
+		throw; // Re-throw to be caught in main
+	}
+	catch (...)
+	{
+		std::cerr << "UNKNOWN EXCEPTION in Game constructor" << std::endl;
+		throw; // Re-throw to be caught in main
+	}
 }
 
-// Function Defination For Cleanup
-void Game::Cleanup()
+void Game::run()
 {
-    CloseWindow();      //CloseWindow: Close window and unload OpenGL context      
+	std::cout << "Game::run() started" << std::endl;
+
+	try
+	{
+		sf::Clock clock;
+
+		// Make sure the window is still open before entering the loop
+		if (!window.isOpen())
+		{
+			std::cout << "ERROR: Window is not open at start of run()" << std::endl;
+			return;
+		}
+
+		std::cout << "Entering main game loop" << std::endl;
+
+		// Main game loop
+		int frameCount = 0;
+		while (window.isOpen())
+		{
+			if (frameCount % 60 == 0)
+			{ // Log every 60 frames (roughly every second)
+				std::cout << "Frame " << frameCount << std::endl;
+			}
+
+			processEvents();
+
+			// Calculate actual deltaTime
+			float deltaTime = clock.restart().asSeconds();
+
+			// Call the update method
+			update(deltaTime);
+
+			// Render
+			render();
+
+			frameCount++;
+		}
+
+		std::cout << "Game loop ended after " << frameCount << " frames" << std::endl;
+	}
+	catch (const std::exception &e)
+	{
+		std::cerr << "EXCEPTION in Game::run: " << e.what() << std::endl;
+		throw; // Re-throw to be caught in main
+	}
+	catch (...)
+	{
+		std::cerr << "UNKNOWN EXCEPTION in Game::run" << std::endl;
+		throw; // Re-throw to be caught in main
+	}
 }
 
-// Function Defination For UpdateMenu
-void Game::UpdateMenu()
+void Game::processEvents()
 {
-    // Check for button clicks
-    if (IsKeyPressed(KEY_ENTER))        // IsKeyPressed: Check if ENTER key has been pressed once
-    {
-        currentState = GameState::GAMEPLAY;
-    }
-    if (IsKeyPressed(KEY_ESCAPE))       // IsKeyPressed: Check if ESCAPE key has been pressed once
-    {
-        exitGame = true;
-    }
+	// Process one-time events
+	while (const auto event = window.pollEvent())
+	{
+		if (event->is<sf::Event::Closed>())
+		{
+			window.close();
+		}
+		else if (const auto *keyPressed = event->getIf<sf::Event::KeyPressed>())
+		{
+			printKey(keyPressed);
+
+			// Handle key presses
+			switch (keyPressed->code)
+			{
+			case sf::Keyboard::Key::W:
+				player1.jump();
+				break;
+			case sf::Keyboard::Key::A:
+				player1.moveLeft();
+				break;
+			case sf::Keyboard::Key::D:
+				player1.moveRight();
+				break;
+			case sf::Keyboard::Key::Q:
+				player1.punch();
+				break;
+			case sf::Keyboard::Key::E:
+				player1.kick();
+				break;
+			case sf::Keyboard::Key::S:
+				player1.block();
+				break;
+			case sf::Keyboard::Key::Up:
+				player2.jump();
+				break;
+			case sf::Keyboard::Key::Left:
+				player2.moveLeft();
+				break;
+			case sf::Keyboard::Key::Right:
+				player2.moveRight();
+				break;
+			case sf::Keyboard::Key::Numpad1:
+				player2.punch();
+				break;
+			case sf::Keyboard::Key::Numpad2:
+				player2.kick();
+				break;
+			case sf::Keyboard::Key::Down:
+				player2.block();
+				break;
+			default:
+				break;
+			}
+		}
+		else if (const auto *keyReleased = event->getIf<sf::Event::KeyReleased>())
+		{
+			// Handle key releases for movement
+			switch (keyReleased->code)
+			{
+			case sf::Keyboard::Key::A:
+			case sf::Keyboard::Key::D:
+				player1.stopMovingHorizontal();
+				break;
+			case sf::Keyboard::Key::Left:
+			case sf::Keyboard::Key::Right:
+				player2.stopMovingHorizontal();
+				break;
+			default:
+				break;
+			}
+		}
+	}
 }
 
-// Function Defination For DrawMenu
-void Game::DrawMenu()
+void Game::update(float deltaTime)
 {
-    DrawText("2D FIGHTING GAME", 200, 100, 40, BLACK);      // DrawText: Draw text (using default font)
-    DrawText("Press ENTER to start", 250, 200, 20, DARKGRAY);
-    DrawText("Press ESC to exit", 250, 230, 20, DARKGRAY);
+	player1.update(deltaTime);
+	player2.update(deltaTime);
+	healthBar1.update(player1.getHealth());
+	healthBar2.update(player2.getHealth());
+	checkCollisions();
 }
 
-// Function Defination For UpdateGameplay
-void Game::UpdateGameplay()
+void Game::render()
 {
-    // Will add gameplay logic later
+	window.clear(sf::Color::Black);
 
-    // For now, just a way to return to menu
-    if (IsKeyPressed(KEY_ESCAPE))
-    {
-        currentState = GameState::MENU;     // First ESCAPE key Press takes to MENU then second ESCAPE key press exits the game
-    }
+	// Draw background first
+	window.draw(backgroundSprite);
+
+	// Then draw other game elements
+	player1.draw(window);
+	player2.draw(window);
+	healthBar1.draw(window);
+	healthBar2.draw(window);
+
+	window.display();
 }
 
-// Function Defination For DrawGameplay
-void Game::DrawGameplay()
+void Game::checkCollisions()
 {
-    DrawText("GAMEPLAY SCREEN", 250, 200, 20, BLACK);   // For Check(for now)
-    DrawText("Press ESC to return to menu", 200, 250, 20, DARKGRAY);        
+	// Example collision detection between player1 and player2
+	if (player1.getSprite().getGlobalBounds().findIntersection(player2.getSprite().getGlobalBounds()).has_value())
+	{
+		// Handle collisions, maybe trigger attack
+	}
 }
 
-// Function Defination For UpdateGameOver
-void Game::UpdateGameOver()
+Game::~Game()
 {
-    if (IsKeyPressed(KEY_ENTER))        // YAHAN MSLA LG RHA HAI: ENTER KEY TAKES BACK TO MENU???
-    {
-        currentState = GameState::MENU;
-    }
-}
+	// Make sure to clean up any SFML resources before exiting
+	window.close();
 
-// // Function Defination For DrawGameOver
-void Game::DrawGameOver()
-{
-    DrawText("GAME OVER", 250, 200, 40, RED);
-    DrawText("Press ENTER to return to menu", 200, 250, 20, DARKGRAY);
+	// Reset any static resources
+	// This might help with the mutex issue
+	AnimationManager::cleanup();
 }
