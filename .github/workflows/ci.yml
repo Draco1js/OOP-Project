@@ -23,6 +23,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Create include directory
+      run: mkdir -p include
+      shell: bash
+
     - name: Install Linux Dependencies
       if: runner.os == 'Linux'
       run: sudo apt-get update && sudo apt-get install -y libxrandr-dev libxcursor-dev libxi-dev libudev-dev libgl1-mesa-dev libegl1-mesa-dev libxinerama-dev libxext-dev libwayland-dev
@@ -34,6 +38,7 @@ jobs:
         cd raylib/src
         make PLATFORM=PLATFORM_DESKTOP
         sudo make install
+        cp raylib.h ../../../include/
 
     - name: Install raylib (macOS)
       if: runner.os == 'macOS'
@@ -46,8 +51,8 @@ jobs:
         sudo mkdir -p /opt/homebrew/include
         sudo ln -sf /usr/local/include/raylib.h /opt/homebrew/include/raylib.h
         # Copy raylib header to local include directory for direct access
-        mkdir -p include
-        cp raylib.h ../../include/
+        cp raylib.h ../../../include/
+      shell: bash
 
     - name: Install raylib (Windows)
       if: runner.os == 'Windows'
@@ -55,22 +60,21 @@ jobs:
         git clone https://github.com/raysan5/raylib.git
         cd raylib/src
         make PLATFORM=PLATFORM_DESKTOP
-        # Create directories if they don't exist
-        mkdir -p ../../include
-        mkdir -p ../../lib || true
+        # Create lib directory if it doesn't exist
+        mkdir -p ../../../lib
         # Copy files
-        cp raylib.h ../../include/
-        cp libraylib.a ../../lib/
+        cp raylib.h ../../../include/
+        cp libraylib.a ../../../lib/
       shell: bash
 
     - name: Build with Make
       run: |
         if [ "${{ runner.os }}" == "macOS" ]; then
-          make PLATFORM=PLATFORM_DESKTOP OBJS=src/*.cpp INCLUDE_PATHS="-I. -I./include -I/usr/local/include -I/opt/homebrew/include"
+          make PLATFORM=PLATFORM_DESKTOP OBJS=src/*.cpp INCLUDE_PATHS="-I. -I./include -I/usr/local/include -I/opt/homebrew/include" RAYLIB_PATH="."
         elif [ "${{ runner.os }}" == "Windows" ]; then
-          make PLATFORM=PLATFORM_DESKTOP OBJS=src/*.cpp INCLUDE_PATHS="-I. -I./include" LDFLAGS="-L./lib"
+          make PLATFORM=PLATFORM_DESKTOP OBJS=src/*.cpp INCLUDE_PATHS="-I. -I./include" LDFLAGS="-L./lib" RAYLIB_PATH="."
         else
-          make PLATFORM=PLATFORM_DESKTOP OBJS=src/*.cpp
+          make PLATFORM=PLATFORM_DESKTOP OBJS=src/*.cpp RAYLIB_PATH="."
         fi
       shell: bash
 
