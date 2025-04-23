@@ -7,6 +7,8 @@
 - [ ] Implement Animation state machine
 - [ ] Implement Fighting mechanics
 - [ ] Player 0 (blue) wins every time
+- [ ] Defence mechanism needs to be fixed
+- [ ] Duck-punch does not work 
 
 ### Members: 
 - Aayan Sultan (24K-2015)
