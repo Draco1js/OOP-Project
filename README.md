@@ -1,10 +1,11 @@
 # OOP Project
 
 ## TODO:
-- Implement Scene Switching
-- Implement Players
-- Implement controls
-- Implement Animation state machine
+- [ x ] Implement Scene Switching
+- [ x ] Implement Players
+- [ x ] Implement controls
+- [  ] Implement Animation state machine
+- [  ] Implement Fighting mechanics
 
 ### Members: 
 - Aayan Sultan (24K-2015)
