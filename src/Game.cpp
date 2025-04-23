@@ -148,6 +148,12 @@ void Game::UpdateGameplay()
     
     // Check if any player has zero health
     if (player1.GetHealth() <= 0 || player2.GetHealth() <= 0) {
+        // Set the winner based on who has health remaining
+        if (player1.GetHealth() <= 0) {
+            winner = 2; // Player 2 wins
+        } else {
+            winner = 1; // Player 1 wins
+        }
         currentState = GameState::GAMEOVER;
     }
     

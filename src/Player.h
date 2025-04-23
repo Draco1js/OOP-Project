@@ -26,11 +26,11 @@ class Player {
 		// Actions
 		void Move(float direction);
 		void Jump();
-		void Duck(bool isDucking);
+		void Duck(bool shouldDuck);
+		void Block(); // Updated to take no parameters
 		void Punch();
 		void Kick();
 		void SpecialAttack();
-		void Block(bool isBlocking);
 		
 		// Getters
 		Rectangle GetRect() const;
