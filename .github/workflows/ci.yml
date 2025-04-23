@@ -29,14 +29,40 @@ jobs:
       if: runner.os == 'Linux'
       run: sudo apt-get update && sudo apt-get install -y libxrandr-dev libxcursor-dev libxi-dev libudev-dev libgl1-mesa-dev libegl1-mesa-dev libxinerama-dev libxext-dev libwayland-dev
 
-    - name: Configure CMake
-      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+    - name: Install raylib (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        git clone https://github.com/raysan5/raylib.git
+        cd raylib/src
+        make PLATFORM=PLATFORM_DESKTOP
+        sudo make install
 
-    - name: Build
-      run: cmake --build build --config Release
+    - name: Install raylib (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        git clone https://github.com/raysan5/raylib.git
+        cd raylib/src
+        make PLATFORM=PLATFORM_DESKTOP
+        sudo make install
+
+    - name: Install raylib (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        git clone https://github.com/raysan5/raylib.git
+        cd raylib/src
+        make PLATFORM=PLATFORM_DESKTOP
+        make install
+
+    - name: Build with Make
+      run: |
+        make PLATFORM=PLATFORM_DESKTOP OBJS=src/*.cpp
 
     - name: Create artifact archive
       run: |
+        mkdir -p build/bin
+        cp *.exe build/bin/ 2>/dev/null || :
+        cp game build/bin/ 2>/dev/null || :
+        cp main build/bin/ 2>/dev/null || :
         cd build/bin
         FILENAME="${{ matrix.platform.name }}"
         FILENAME_SAFE=$(echo "$FILENAME" | tr ' ' '_')
