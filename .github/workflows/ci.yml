@@ -23,8 +23,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Create include directory
-      run: mkdir -p include
+    - name: Create directories
+      run: |
+        mkdir -p include
+        mkdir -p lib
       shell: bash
 
     - name: Install Linux Dependencies
@@ -38,7 +40,8 @@ jobs:
         cd raylib/src
         make PLATFORM=PLATFORM_DESKTOP
         sudo make install
-        cp raylib.h ../../../include/
+        cp raylib.h "$GITHUB_WORKSPACE/include/"
+      shell: bash
 
     - name: Install raylib (macOS)
       if: runner.os == 'macOS'
@@ -46,12 +49,11 @@ jobs:
         git clone https://github.com/raysan5/raylib.git
         cd raylib/src
         make PLATFORM=PLATFORM_DESKTOP
-        sudo make install
-        # Create symbolic links to ensure raylib.h is found in both locations
-        sudo mkdir -p /opt/homebrew/include
-        sudo ln -sf /usr/local/include/raylib.h /opt/homebrew/include/raylib.h
-        # Copy raylib header to local include directory for direct access
-        cp raylib.h ../../../include/
+        # Copy files directly instead of using make install which has platform-specific issues
+        cp libraylib.a "$GITHUB_WORKSPACE/lib/"
+        cp raylib.h "$GITHUB_WORKSPACE/include/"
+        cp raymath.h "$GITHUB_WORKSPACE/include/" || true
+        cp rlgl.h "$GITHUB_WORKSPACE/include/" || true
       shell: bash
 
     - name: Install raylib (Windows)
@@ -60,11 +62,12 @@ jobs:
         git clone https://github.com/raysan5/raylib.git
         cd raylib/src
         make PLATFORM=PLATFORM_DESKTOP
-        # Create lib directory if it doesn't exist
-        mkdir -p ../../../lib
-        # Copy files
-        cp raylib.h ../../../include/
-        cp libraylib.a ../../../lib/
+        # Copy files directly to our workspace directories
+        cp raylib.h "$GITHUB_WORKSPACE/include/"
+        cp libraylib.a "$GITHUB_WORKSPACE/lib/"
+        # Copy additional header files that might be needed
+        cp raymath.h "$GITHUB_WORKSPACE/include/" || true
+        cp rlgl.h "$GITHUB_WORKSPACE/include/" || true
       shell: bash
 
     - name: Build with Make
@@ -74,7 +77,7 @@ jobs:
         elif [ "${{ runner.os }}" == "Windows" ]; then
           make PLATFORM=PLATFORM_DESKTOP OBJS=src/*.cpp INCLUDE_PATHS="-I. -I./include" LDFLAGS="-L./lib" RAYLIB_PATH="."
         else
-          make PLATFORM=PLATFORM_DESKTOP OBJS=src/*.cpp RAYLIB_PATH="."
+          make PLATFORM=PLATFORM_DESKTOP OBJS=src/*.cpp INCLUDE_PATHS="-I. -I./include" RAYLIB_PATH="."
         fi
       shell: bash
 
