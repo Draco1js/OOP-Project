@@ -110,6 +110,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    permissions:
+      contents: write
     
     steps:
       - name: Checkout code
@@ -123,6 +125,9 @@ jobs:
       - name: Get current date
         id: date
         run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+      
+      - name: List artifacts
+        run: find artifacts -type f
           
       - name: Create Release
         id: create_release
@@ -133,7 +138,6 @@ jobs:
           draft: true
           prerelease: false
           files: |
-            artifacts/**/*.zip
-            artifacts/**/*.tar.gz
+            artifacts/**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
