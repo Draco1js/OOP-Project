@@ -42,8 +42,12 @@ jobs:
         cd raylib/src
         make PLATFORM=PLATFORM_DESKTOP
         sudo make install
-        # Create symbolic link to ensure raylib.h is found
+        # Create symbolic links to ensure raylib.h is found in both locations
+        sudo mkdir -p /opt/homebrew/include
         sudo ln -sf /usr/local/include/raylib.h /opt/homebrew/include/raylib.h
+        # Copy raylib header to local include directory for direct access
+        mkdir -p include
+        cp raylib.h ../../include/
 
     - name: Install raylib (Windows)
       if: runner.os == 'Windows'
@@ -51,16 +55,18 @@ jobs:
         git clone https://github.com/raysan5/raylib.git
         cd raylib/src
         make PLATFORM=PLATFORM_DESKTOP
-        # Don't try to install, just use the local build
+        # Create directories if they don't exist
         mkdir -p ../../include
+        mkdir -p ../../lib || true
+        # Copy files
         cp raylib.h ../../include/
-        mkdir -p ../../lib
-        cp ../src/libraylib.a ../../lib/
+        cp libraylib.a ../../lib/
+      shell: bash
 
     - name: Build with Make
       run: |
         if [ "${{ runner.os }}" == "macOS" ]; then
-          make PLATFORM=PLATFORM_DESKTOP OBJS=src/*.cpp INCLUDE_PATHS="-I. -I/usr/local/include"
+          make PLATFORM=PLATFORM_DESKTOP OBJS=src/*.cpp INCLUDE_PATHS="-I. -I./include -I/usr/local/include -I/opt/homebrew/include"
         elif [ "${{ runner.os }}" == "Windows" ]; then
           make PLATFORM=PLATFORM_DESKTOP OBJS=src/*.cpp INCLUDE_PATHS="-I. -I./include" LDFLAGS="-L./lib"
         else
