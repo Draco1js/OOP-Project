@@ -3,8 +3,6 @@ name: Build and Release
 on:
   push:
     branches: [ main, master ]
-    tags:
-      - 'v*'
   pull_request:
     branches: [ main, master ]
 
@@ -44,6 +42,8 @@ jobs:
         cd raylib/src
         make PLATFORM=PLATFORM_DESKTOP
         sudo make install
+        # Create symbolic link to ensure raylib.h is found
+        sudo ln -sf /usr/local/include/raylib.h /opt/homebrew/include/raylib.h
 
     - name: Install raylib (Windows)
       if: runner.os == 'Windows'
@@ -51,11 +51,22 @@ jobs:
         git clone https://github.com/raysan5/raylib.git
         cd raylib/src
         make PLATFORM=PLATFORM_DESKTOP
-        make install
+        # Don't try to install, just use the local build
+        mkdir -p ../../include
+        cp raylib.h ../../include/
+        mkdir -p ../../lib
+        cp ../src/libraylib.a ../../lib/
 
     - name: Build with Make
       run: |
-        make PLATFORM=PLATFORM_DESKTOP OBJS=src/*.cpp
+        if [ "${{ runner.os }}" == "macOS" ]; then
+          make PLATFORM=PLATFORM_DESKTOP OBJS=src/*.cpp INCLUDE_PATHS="-I. -I/usr/local/include"
+        elif [ "${{ runner.os }}" == "Windows" ]; then
+          make PLATFORM=PLATFORM_DESKTOP OBJS=src/*.cpp INCLUDE_PATHS="-I. -I./include" LDFLAGS="-L./lib"
+        else
+          make PLATFORM=PLATFORM_DESKTOP OBJS=src/*.cpp
+        fi
+      shell: bash
 
     - name: Create artifact archive
       run: |
@@ -85,6 +96,7 @@ jobs:
     name: Create Release
     needs: build
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     
     steps:
       - name: Checkout code
@@ -95,11 +107,16 @@ jobs:
         with:
           path: artifacts
           
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+          
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          name: Release ${{ github.ref_name }}
+          name: Build ${{ steps.date.outputs.date }}-${{ github.sha }}
+          tag_name: build-${{ steps.date.outputs.date }}-${{ github.sha }}
           draft: true
           prerelease: false
           files: |
