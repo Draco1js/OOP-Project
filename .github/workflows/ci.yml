@@ -73,9 +73,9 @@ jobs:
     - name: Build with Make
       run: |
         if [ "${{ runner.os }}" == "macOS" ]; then
-          make PLATFORM=PLATFORM_DESKTOP OBJS=src/*.cpp INCLUDE_PATHS="-I. -I./include -I/usr/local/include -I/opt/homebrew/include" RAYLIB_PATH="."
+          make PLATFORM=PLATFORM_DESKTOP OBJS=src/*.cpp INCLUDE_PATHS="-I. -I./include -I/usr/local/include -I/opt/homebrew/include" LDFLAGS="-L./lib" RAYLIB_PATH="." RAYLIB_LIBTYPE=STATIC
         elif [ "${{ runner.os }}" == "Windows" ]; then
-          make PLATFORM=PLATFORM_DESKTOP OBJS=src/*.cpp INCLUDE_PATHS="-I. -I./include" LDFLAGS="-L./lib" RAYLIB_PATH="."
+          make PLATFORM=PLATFORM_DESKTOP OBJS=src/*.cpp INCLUDE_PATHS="-I. -I./include" LDFLAGS="-L./lib" RAYLIB_PATH="." CFLAGS=""
         else
           make PLATFORM=PLATFORM_DESKTOP OBJS=src/*.cpp INCLUDE_PATHS="-I. -I./include" RAYLIB_PATH="."
         fi
