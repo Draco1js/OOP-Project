@@ -1,277 +1,230 @@
-#include "Game.hpp"
-#include <iostream>
-#include <fstream>
+#include "Game.h"
 
-void printKey(const sf::Event::KeyPressed *keyPressed)
+Game::Game() : currentState(GameState::MENU), exitGame(false), selectedButton(0)
 {
-	std::string keyName = "Unknown";
-	switch (keyPressed->code)
-	{
-	case sf::Keyboard::Key::W:
-		keyName = "W";
-		break;
-	case sf::Keyboard::Key::A:
-		keyName = "A";
-		break;
-	case sf::Keyboard::Key::S:
-		keyName = "S";
-		break;
-	case sf::Keyboard::Key::D:
-		keyName = "D";
-		break;
-	case sf::Keyboard::Key::Up:
-		keyName = "Up Arrow";
-		break;
-	case sf::Keyboard::Key::Down:
-		keyName = "Down Arrow";
-		break;
-	case sf::Keyboard::Key::Left:
-		keyName = "Left Arrow";
-		break;
-	case sf::Keyboard::Key::Right:
-		keyName = "Right Arrow";
-		break;
-	case sf::Keyboard::Key::Space:
-		keyName = "Space";
-		break;
-	case sf::Keyboard::Key::Escape:
-		keyName = "Escape";
-		break;
-	default:
-		keyName = "Other (" + std::to_string(static_cast<int>(keyPressed->scancode)) + ")";
-	}
-
-	std::cout << "Key pressed: " << keyName << std::endl
-			  << std::flush;
+    // Initialize menu buttons
+    int screenWidth = GetScreenWidth();
+    int screenHeight = GetScreenHeight();
+    
+    playButton = {
+        static_cast<float>(screenWidth/2 - 100), 
+        static_cast<float>(screenHeight/2 - 50), 
+        200.0f, 
+        50.0f
+    };
+    
+    exitButton = {
+        static_cast<float>(screenWidth/2 - 100), 
+        static_cast<float>(screenHeight/2 + 50), 
+        200.0f, 
+        50.0f
+    };
+    
+    // Load background texture
+    backgroundTexture = LoadTexture("assets/insbg.gif");
+    
+    // Initialize player 1 at left side
+    player1 = Player(100, 400, true); // x, y, isPlayer1=true
+    
+    // Initialize player 2 at right side
+    player2 = Player(600, 400, false); // x, y, isPlayer1=false
 }
 
-Game::Game() : window(sf::VideoMode({800, 600}), "Fighting Game", sf::Style::Default),
-			   player1(100, 400, true),
-			   player2(600, 400, false),
-			   healthBar1(window.getSize().x / 2 - 350, 10, player1.getHealth()),
-			   healthBar2(window.getSize().x / 2 + 150, 10, player2.getHealth()),
-			   backgroundTexture(),
-			   backgroundSprite(backgroundTexture) // Initialize with empty texture
+// Destructor
+Game::~Game() 
 {
-	std::cout << "Game constructor started" << std::endl;
+    // Unload textures
+    UnloadTexture(backgroundTexture);
+}
 
-	try
+Game::GameState Game::GetCurrentState()
+{
+	return currentState;
+}
+
+void Game::SetCurrentState(GameState state)
+{
+	currentState = state;
+}
+
+bool Game::IsExitGame()
+{
+	return exitGame;
+}
+
+void Game::Update()
+{
+	switch (currentState)
 	{
-		// Set window properties
-		window.setFramerateLimit(60);
-		std::cout << "Framerate set to 60" << std::endl;
-
-		// Load background texture
-		std::cout << "Attempting to load background texture..." << std::endl;
-		if (!backgroundTexture.loadFromFile("assets/sprites/insbg.gif"))
-		{
-			std::cout << "ERROR: Failed to load background image!" << std::endl;
-
-			// Create a fallback texture - solid color
-			backgroundTexture.resize({800, 600});
-			sf::Image img;
-			img.resize({800, 600}, sf::Color(50, 50, 100));
-			backgroundTexture.update(img);
-			std::cout << "Created fallback texture" << std::endl;
-		}
-		else
-		{
-			std::cout << "SUCCESS: Background image loaded" << std::endl;
-		}
-
-		// Now set the texture to the sprite
-		backgroundSprite.setTexture(backgroundTexture);
-
-		// Scale the background to fit the window
-		float scaleX = static_cast<float>(window.getSize().x) / backgroundTexture.getSize().x;
-		float scaleY = static_cast<float>(window.getSize().y) / backgroundTexture.getSize().y;
-		backgroundSprite.setScale({scaleX, scaleY});
-
-		std::cout << "Background scaled: " << scaleX << " x " << scaleY << std::endl;
-		std::cout << "Game constructor completed successfully" << std::endl;
-	}
-	catch (const std::exception &e)
-	{
-		std::cerr << "EXCEPTION in Game constructor: " << e.what() << std::endl;
-		throw; // Re-throw to be caught in main
-	}
-	catch (...)
-	{
-		std::cerr << "UNKNOWN EXCEPTION in Game constructor" << std::endl;
-		throw; // Re-throw to be caught in main
+	case GameState::MENU:
+		UpdateMenu();
+		break;
+	case GameState::GAMEPLAY:
+		UpdateGameplay();
+		break;
+	case GameState::GAMEOVER:
+		UpdateGameOver();
+		break;
 	}
 }
 
-void Game::run()
+void Game::UpdateMenu()
 {
-	std::cout << "Game::run() started" << std::endl;
-
-	try
-	{
-		sf::Clock clock;
-
-		// Make sure the window is still open before entering the loop
-		if (!window.isOpen())
-		{
-			std::cout << "ERROR: Window is not open at start of run()" << std::endl;
-			return;
-		}
-
-		std::cout << "Entering main game loop" << std::endl;
-
-		// Main game loop
-		int frameCount = 0;
-		while (window.isOpen())
-		{
-			if (frameCount % 60 == 0)
-			{ // Log every 60 frames (roughly every second)
-				std::cout << "Frame " << frameCount << std::endl;
-			}
-
-			processEvents();
-
-			// Calculate actual deltaTime
-			float deltaTime = clock.restart().asSeconds();
-
-			// Call the update method
-			update(deltaTime);
-
-			// Render
-			render();
-
-			frameCount++;
-		}
-
-		std::cout << "Game loop ended after " << frameCount << " frames" << std::endl;
-	}
-	catch (const std::exception &e)
-	{
-		std::cerr << "EXCEPTION in Game::run: " << e.what() << std::endl;
-		throw; // Re-throw to be caught in main
-	}
-	catch (...)
-	{
-		std::cerr << "UNKNOWN EXCEPTION in Game::run" << std::endl;
-		throw; // Re-throw to be caught in main
-	}
+    // Keyboard navigation
+    if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S)) {
+        selectedButton = 1; // Select exit button
+    }
+    if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W)) {
+        selectedButton = 0; // Select play button
+    }
+    
+    // Button activation with Enter or Space
+    if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
+        if (selectedButton == 0) {
+            currentState = GameState::GAMEPLAY;
+        } else {
+            exitGame = true;
+        }
+    }
+    
+    // Mouse interaction (keep existing functionality)
+    Vector2 mousePos = GetMousePosition();
+    
+    // Check if play button is clicked
+    if (CheckCollisionPointRec(mousePos, playButton)) {
+        selectedButton = 0; // Highlight on hover
+        if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
+            currentState = GameState::GAMEPLAY;
+        }
+    }
+    
+    // Check if exit button is clicked
+    if (CheckCollisionPointRec(mousePos, exitButton)) {
+        selectedButton = 1; // Highlight on hover
+        if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
+            exitGame = true;
+        }
+    }
 }
 
-void Game::processEvents()
+void Game::UpdateGameplay()
 {
-	// Process one-time events
-	while (const auto event = window.pollEvent())
-	{
-		if (event->is<sf::Event::Closed>())
-		{
-			window.close();
-		}
-		else if (const auto *keyPressed = event->getIf<sf::Event::KeyPressed>())
-		{
-			printKey(keyPressed);
-
-			// Handle key presses
-			switch (keyPressed->code)
-			{
-			case sf::Keyboard::Key::W:
-				player1.jump();
-				break;
-			case sf::Keyboard::Key::A:
-				player1.moveLeft();
-				break;
-			case sf::Keyboard::Key::D:
-				player1.moveRight();
-				break;
-			case sf::Keyboard::Key::Q:
-				player1.punch();
-				break;
-			case sf::Keyboard::Key::E:
-				player1.kick();
-				break;
-			case sf::Keyboard::Key::S:
-				player1.block();
-				break;
-			case sf::Keyboard::Key::Up:
-				player2.jump();
-				break;
-			case sf::Keyboard::Key::Left:
-				player2.moveLeft();
-				break;
-			case sf::Keyboard::Key::Right:
-				player2.moveRight();
-				break;
-			case sf::Keyboard::Key::Numpad1:
-				player2.punch();
-				break;
-			case sf::Keyboard::Key::Numpad2:
-				player2.kick();
-				break;
-			case sf::Keyboard::Key::Down:
-				player2.block();
-				break;
-			default:
-				break;
-			}
-		}
-		else if (const auto *keyReleased = event->getIf<sf::Event::KeyReleased>())
-		{
-			// Handle key releases for movement
-			switch (keyReleased->code)
-			{
-			case sf::Keyboard::Key::A:
-			case sf::Keyboard::Key::D:
-				player1.stopMovingHorizontal();
-				break;
-			case sf::Keyboard::Key::Left:
-			case sf::Keyboard::Key::Right:
-				player2.stopMovingHorizontal();
-				break;
-			default:
-				break;
-			}
-		}
-	}
+    player1.Update();
+    player2.Update();
+    
+    // Check for collisions between players
+    if (CheckCollisionRecs(player1.GetRect(), player2.GetRect()))
+    {
+        // Handle collision (could implement pushing or damage)
+    }
+    
+    // Example condition to go to game over
+    if (IsKeyPressed(KEY_ESCAPE))
+    {
+        currentState = GameState::MENU;
+    }
 }
 
-void Game::update(float deltaTime)
+void Game::UpdateGameOver()
 {
-	player1.update(deltaTime);
-	player2.update(deltaTime);
-	healthBar1.update(player1.getHealth());
-	healthBar2.update(player2.getHealth());
-	checkCollisions();
+    if (IsKeyPressed(KEY_ENTER))
+    {
+        currentState = GameState::MENU;
+    }
 }
 
-void Game::render()
+void Game::Draw()
 {
-	window.clear(sf::Color::Black);
-
-	// Draw background first
-	window.draw(backgroundSprite);
-
-	// Then draw other game elements
-	player1.draw(window);
-	player2.draw(window);
-	healthBar1.draw(window);
-	healthBar2.draw(window);
-
-	window.display();
+    switch (currentState)
+    {
+    case GameState::MENU:
+        DrawMenu();
+        break;
+    case GameState::GAMEPLAY:
+        DrawGameplay();
+        break;
+    case GameState::GAMEOVER:
+        DrawGameOver();
+        break;
+    }
 }
 
-void Game::checkCollisions()
+void Game::DrawMenu()
 {
-	// Example collision detection between player1 and player2
-	if (player1.getSprite().getGlobalBounds().findIntersection(player2.getSprite().getGlobalBounds()).has_value())
-	{
-		// Handle collisions, maybe trigger attack
-	}
+    // Draw background with scaling to fit screen
+    int screenWidth = GetScreenWidth();
+    int screenHeight = GetScreenHeight();
+    
+    // Calculate scaling factors to fit the screen
+    float scaleX = (float)screenWidth / backgroundTexture.width;
+    float scaleY = (float)screenHeight / backgroundTexture.height;
+    
+    // Draw the scaled background
+    DrawTextureEx(backgroundTexture, {0, 0}, 0.0f, 
+                 scaleX > scaleY ? scaleX : scaleY, WHITE);
+    
+    // Draw title
+    DrawText("GAME MENU", screenWidth/2 - MeasureText("GAME MENU", 40)/2, 100, 40, WHITE);
+    
+    // Draw buttons with selection highlight
+    Color playButtonColor = selectedButton == 0 ? SKYBLUE : BLUE;
+    Color exitButtonColor = selectedButton == 1 ? PINK : RED;
+    
+    DrawRectangleRec(playButton, playButtonColor);
+    DrawRectangleRec(exitButton, exitButtonColor);
+    
+    // Draw selection indicator (triangle)
+    if (selectedButton == 0) {
+        DrawTriangle(
+            {playButton.x - 20, playButton.y + playButton.height/2},
+            {playButton.x - 5, playButton.y + playButton.height/2 - 10},
+            {playButton.x - 5, playButton.y + playButton.height/2 + 10},
+            WHITE
+        );
+    } else {
+        DrawTriangle(
+            {exitButton.x - 20, exitButton.y + exitButton.height/2},
+            {exitButton.x - 5, exitButton.y + exitButton.height/2 - 10},
+            {exitButton.x - 5, exitButton.y + exitButton.height/2 + 10},
+            WHITE
+        );
+    }
+    
+    // Draw button text
+    DrawText("PLAY", 
+             static_cast<int>(playButton.x + playButton.width/2 - MeasureText("PLAY", 20)/2), 
+             static_cast<int>(playButton.y + playButton.height/2 - 10), 
+             20, WHITE);
+    
+    DrawText("EXIT", 
+             static_cast<int>(exitButton.x + exitButton.width/2 - MeasureText("EXIT", 20)/2), 
+             static_cast<int>(exitButton.y + exitButton.height/2 - 10), 
+             20, WHITE);
+             
+    // Draw keyboard controls hint
+    DrawText("Use UP/DOWN arrows or W/S to navigate", 
+             screenWidth/2 - MeasureText("Use UP/DOWN arrows or W/S to navigate", 15)/2, 
+             screenHeight - 60, 15, WHITE);
+    DrawText("Press ENTER or SPACE to select", 
+             screenWidth/2 - MeasureText("Press ENTER or SPACE to select", 15)/2, 
+             screenHeight - 40, 15, WHITE);
 }
 
-Game::~Game()
+void Game::DrawGameplay()
 {
-	// Make sure to clean up any SFML resources before exiting
-	window.close();
+    // Draw both players
+    player1.Draw();
+    player2.Draw();
+    
+    // Draw ground line
+    DrawLine(0, GetScreenHeight() - 50, GetScreenWidth(), GetScreenHeight() - 50, BLACK);
+    DrawText("Press ESC to return to menu", 10, 40, 20, WHITE);
+}
 
-	// Reset any static resources
-	// This might help with the mutex issue
-	AnimationManager::cleanup();
+void Game::DrawGameOver()
+{
+    DrawText("GAME OVER", GetScreenWidth()/2 - MeasureText("GAME OVER", 40)/2, 
+             GetScreenHeight()/2 - 20, 40, RED);
+    DrawText("Press ENTER to return to menu", GetScreenWidth()/2 - MeasureText("Press ENTER to return to menu", 20)/2, 
+             GetScreenHeight()/2 + 40, 20, WHITE);
 }

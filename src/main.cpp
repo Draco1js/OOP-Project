@@ -1,47 +1,29 @@
-#include "Game.hpp"
-#include <iostream>
-#include <thread>
-#include <chrono>
-#include <cstdio>
-#include <exception>
-#include <stdexcept>
+#include <raylib.h>
+#include "Game.h"
 
-int main() {
-    std::cout << "=== Program starting ===" << std::endl;
+int main() 
+{
+    const Color darkGreen = {20, 160, 133, 255};
     
-    // Add a pause at the beginning to ensure we can see output
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    constexpr int screenWidth = 800;
+    constexpr int screenHeight = 600;
     
-    try {
-        std::cout << "About to create Game object" << std::endl;
+    InitWindow(screenWidth, screenHeight, "My Game");
+    SetTargetFPS(60);
+    SetExitKey(KEY_NULL);
+    
+    Game game;
+    
+    while (!WindowShouldClose() && !game.IsExitGame())
+    {
+        game.Update();
         
-        // Try to create the game object
-        Game game;
-        
-        std::cout << "Game object created successfully" << std::endl;
-        std::cout << "About to run game" << std::endl;
-        
-        // Add another pause
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        
-        // Run the game
-        game.run();
-        
-        std::cout << "Game run completed" << std::endl;
-    }
-    catch (const std::exception& e) {
-        std::cerr << "EXCEPTION: " << e.what() << std::endl;
-        return 1;
-    }
-    catch (...) {
-        std::cerr << "UNKNOWN EXCEPTION CAUGHT" << std::endl;
-        return 1;
+        BeginDrawing();
+            ClearBackground(darkGreen);
+            game.Draw();
+        EndDrawing();
     }
     
-    std::cout << "=== Program ending normally ===" << std::endl;
-    
-    // Final pause to ensure we can see the output
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-    
+    CloseWindow();
     return 0;
 }
