@@ -87,6 +87,8 @@ jobs:
         cp *.exe build/bin/ 2>/dev/null || :
         cp game build/bin/ 2>/dev/null || :
         cp main build/bin/ 2>/dev/null || :
+        
+        # Create platform-specific archive
         cd build/bin
         FILENAME="${{ matrix.platform.name }}"
         FILENAME_SAFE=$(echo "$FILENAME" | tr ' ' '_')
@@ -103,7 +105,10 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.platform.name }}-build
-        path: build/bin
+        path: |
+          build/bin
+          *.zip
+          *.tar.gz
 
   release:
     name: Create Release
@@ -126,9 +131,13 @@ jobs:
         id: date
         run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
       
-      - name: List artifacts
-        run: find artifacts -type f
-          
+      - name: Prepare release files
+        run: |
+          mkdir -p release_files
+          find artifacts -type f -name "*.exe" -o -name "game" -o -name "main" | xargs -I{} cp {} release_files/
+          find artifacts -type f -name "*.zip" -o -name "*.tar.gz" | xargs -I{} cp {} release_files/
+          ls -la release_files
+      
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
@@ -137,7 +146,6 @@ jobs:
           tag_name: build-${{ steps.date.outputs.date }}-${{ github.sha }}
           draft: true
           prerelease: false
-          files: |
-            artifacts/**/*
+          files: release_files/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
