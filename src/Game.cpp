@@ -1,6 +1,14 @@
 #include "Game.h"
+#include <cstdio>  // Replace <stdio.h> with <cstdio> for std::snprintf
+#include <new> // Add this for placement new
 
-Game::Game() : currentState(GameState::MENU), exitGame(false), selectedButton(0)
+Game::Game() : 
+    currentState(GameState::MENU), 
+    exitGame(false),  // Now this is in the correct order
+    player1(100, 400, true),
+    player2(600, 400, false),
+    winner(0),
+    selectedButton(0)
 {
     // Initialize menu buttons
     int screenWidth = GetScreenWidth();
@@ -23,11 +31,20 @@ Game::Game() : currentState(GameState::MENU), exitGame(false), selectedButton(0)
     // Load background texture
     backgroundTexture = LoadTexture("assets/insbg.gif");
     
-    // Initialize player 1 at left side
-    player1 = Player(100, 400, true); // x, y, isPlayer1=true
+    // Initialize health bars
+    player1HealthBar = {
+        20.0f,                  // x position (left side)
+        20.0f,                  // y position (top)
+        200.0f,                 // width
+        20.0f                   // height
+    };
     
-    // Initialize player 2 at right side
-    player2 = Player(600, 400, false); // x, y, isPlayer1=false
+    player2HealthBar = {
+        static_cast<float>(screenWidth - 220), // x position (right side)
+        20.0f,                  // y position (top)
+        200.0f,                 // width
+        20.0f                   // height
+    };
 }
 
 // Destructor
@@ -112,16 +129,90 @@ void Game::UpdateGameplay()
     player1.Update();
     player2.Update();
     
+    // Check for attack collisions
+    CheckAttackCollisions();
+    
+    // Debug output
+    if (player1.IsAttacking()) {
+        DrawText("Player 1 is attacking", 10, 10, 20, WHITE);
+    }
+    if (player2.IsAttacking()) {
+        DrawText("Player 2 is attacking", 10, 40, 20, WHITE);
+    }
+    
     // Check for collisions between players
     if (CheckCollisionRecs(player1.GetRect(), player2.GetRect()))
     {
         // Handle collision (could implement pushing or damage)
     }
     
-    // Example condition to go to game over
+    // Check if any player has zero health
+    if (player1.GetHealth() <= 0 || player2.GetHealth() <= 0) {
+        currentState = GameState::GAMEOVER;
+    }
+    
+    // Return to menu and reset game state
     if (IsKeyPressed(KEY_ESCAPE))
     {
+        ResetGameplay();
         currentState = GameState::MENU;
+    }
+}
+
+void Game::CheckAttackCollisions()
+{
+    // Check if player1 is hitting player2
+    if (player1.IsAttacking()) {
+        Rectangle p1AttackHitbox = player1.GetAttackHitbox();
+        Rectangle p2Rect = player2.GetRect();
+        
+        if (CheckCollisionRecs(p1AttackHitbox, p2Rect)) {
+            // Player 1 hit player 2
+            int damage = 5;
+            
+            // Different damage based on attack type
+            if (player1.GetCurrentState() == Player::State::KICKING) {
+                damage = 7;
+            } else if (player1.GetCurrentState() == Player::State::SPECIAL_ATTACK) {
+                damage = 15;
+            }
+            
+            // Check if attack is from behind (can't block attacks from behind)
+            bool attackFromBehind = (player1.IsFacingRight() != player2.IsFacingRight());
+            
+            // Only apply damage if not blocking or if hit from behind
+            if (!player2.IsBlocking() || attackFromBehind) {
+                // Pass the direction the attack is coming from (player1's facing direction)
+                player2.TakeDamage(damage, player1.IsFacingRight());
+            }
+        }
+    }
+    
+    // Check if player2 is hitting player1
+    if (player2.IsAttacking()) {
+        Rectangle p2AttackHitbox = player2.GetAttackHitbox();
+        Rectangle p1Rect = player1.GetRect();
+        
+        if (CheckCollisionRecs(p2AttackHitbox, p1Rect)) {
+            // Player 2 hit player 1
+            int damage = 5;
+            
+            // Different damage based on attack type
+            if (player2.GetCurrentState() == Player::State::KICKING) {
+                damage = 7;
+            } else if (player2.GetCurrentState() == Player::State::SPECIAL_ATTACK) {
+                damage = 15;
+            }
+            
+            // Check if attack is from behind (can't block attacks from behind)
+            bool attackFromBehind = (player2.IsFacingRight() != player1.IsFacingRight());
+            
+            // Only apply damage if not blocking or if hit from behind
+            if (!player1.IsBlocking() || attackFromBehind) {
+                // Pass the direction the attack is coming from (player2's facing direction)
+                player1.TakeDamage(damage, player2.IsFacingRight());
+            }
+        }
     }
 }
 
@@ -129,6 +220,7 @@ void Game::UpdateGameOver()
 {
     if (IsKeyPressed(KEY_ENTER))
     {
+        ResetGameplay();
         currentState = GameState::MENU;
     }
 }
@@ -216,15 +308,84 @@ void Game::DrawGameplay()
     player1.Draw();
     player2.Draw();
     
+    // Draw health bars
+    DrawHealthBars();
+    
     // Draw ground line
     DrawLine(0, GetScreenHeight() - 50, GetScreenWidth(), GetScreenHeight() - 50, BLACK);
-    DrawText("Press ESC to return to menu", 10, 40, 20, WHITE);
 }
 
 void Game::DrawGameOver()
 {
-    DrawText("GAME OVER", GetScreenWidth()/2 - MeasureText("GAME OVER", 40)/2, 
-             GetScreenHeight()/2 - 20, 40, RED);
-    DrawText("Press ENTER to return to menu", GetScreenWidth()/2 - MeasureText("Press ENTER to return to menu", 20)/2, 
-             GetScreenHeight()/2 + 40, 20, WHITE);
+    int screenWidth = GetScreenWidth();
+    int screenHeight = GetScreenHeight();
+    
+    DrawText("GAME OVER", screenWidth/2 - MeasureText("GAME OVER", 40)/2, 
+             screenHeight/2 - 60, 40, RED);
+    
+    // Using snprintf instead of sprintf
+    char winnerText[32];
+    std::snprintf(winnerText, sizeof(winnerText), "PLAYER %d WINS!", winner);
+    
+    Color winnerColor = (winner == 1) ? RED : BLUE;
+    DrawText(winnerText, 
+             screenWidth/2 - MeasureText(winnerText, 30)/2, 
+             screenHeight/2, 30, winnerColor);
+    
+    DrawText("Press ENTER to return to menu", 
+             screenWidth/2 - MeasureText("Press ENTER to return to menu", 20)/2, 
+             screenHeight/2 + 60, 20, WHITE);
+}
+
+void Game::DrawHealthBars()
+{
+    // Get current health values
+    int p1Health = player1.GetHealth();
+    int p2Health = player2.GetHealth();
+    
+    // Calculate health percentages
+    float p1HealthPercent = static_cast<float>(p1Health) / 200.0f;
+    float p2HealthPercent = static_cast<float>(p2Health) / 200.0f;
+    
+    // Draw player 1 health bar (background)
+    DrawRectangleRec(player1HealthBar, DARKGRAY);
+    
+    // Draw player 1 health bar (foreground - current health)
+    Rectangle p1CurrentHealth = player1HealthBar;
+    p1CurrentHealth.width *= p1HealthPercent;
+    DrawRectangleRec(p1CurrentHealth, RED);
+    
+    // Draw player 2 health bar (background)
+    DrawRectangleRec(player2HealthBar, DARKGRAY);
+    
+    // Draw player 2 health bar (foreground - current health)
+    Rectangle p2CurrentHealth = player2HealthBar;
+    p2CurrentHealth.width *= p2HealthPercent;
+    DrawRectangleRec(p2CurrentHealth, BLUE);
+    
+    // Draw health text
+    char p1HealthText[32];
+    char p2HealthText[32];
+    std::snprintf(p1HealthText, sizeof(p1HealthText), "P1: %d/200", p1Health);
+    std::snprintf(p2HealthText, sizeof(p2HealthText), "P2: %d/200", p2Health);
+    
+    DrawText(p1HealthText, 
+             static_cast<int>(player1HealthBar.x + 5), 
+             static_cast<int>(player1HealthBar.y + 2), 
+             16, WHITE);
+    
+    DrawText(p2HealthText, 
+             static_cast<int>(player2HealthBar.x + 5), 
+             static_cast<int>(player2HealthBar.y + 2), 
+             16, WHITE);
+}
+
+void Game::ResetGameplay()
+{
+    // Use the Reset method instead of placement new
+    player1.Reset(100, 400, true);
+    player2.Reset(600, 400, false);
+    
+    // Reset winner
+    winner = 0;
 }

@@ -4,18 +4,31 @@
 
 class Game
 {
-private:
+public:
     enum class GameState
     {
         MENU,
         GAMEPLAY,
         GAMEOVER
     };
-
+    
+    Game();
+    ~Game();
+    
+    GameState GetCurrentState();
+    void SetCurrentState(GameState state);
+    bool IsExitGame();
+    
+    void Update();
+    void Draw();
+    
+private:
+    // Reorder these declarations to match initialization order in constructor
     GameState currentState;
+    bool exitGame;  // Move this before player1
     Player player1; // First player (WASD controls)
     Player player2; // Second player (Arrow keys)
-    bool exitGame;
+    int winner; // 1 for player1, 2 for player2, 0 for no winner yet
     
     // Menu variables
     Rectangle playButton;
@@ -29,19 +42,14 @@ private:
     void UpdateMenu();
     void UpdateGameplay();
     void UpdateGameOver();
-    
     void DrawMenu();
     void DrawGameplay();
     void DrawGameOver();
+    void CheckAttackCollisions();
+    void ResetGameplay();
 
-public:
-    Game();
-    ~Game();
-    
-    void Update();
-    void Draw();
-    
-    GameState GetCurrentState();
-    void SetCurrentState(GameState state);
-    bool IsExitGame();
+    // Health bar properties
+    Rectangle player1HealthBar;
+    Rectangle player2HealthBar;
+    void DrawHealthBars();
 };

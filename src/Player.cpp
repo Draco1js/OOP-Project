@@ -1,99 +1,358 @@
 
 #include "Player.h"
+#include "raylib.h"
+#include <algorithm> // Add this for std::min
 
-Player::Player()
+Player::Player(float x, float y, bool isPlayer1) 
+    : x(x), y(y), velocityX(0), velocityY(0), width(50), height(100), 
+      health(200), isPlayer1(isPlayer1), facingRight(isPlayer1), 
+      isJumping(false), isDucking(false), isBlocking(false),
+      currentState(State::IDLE), attackTimer(0), specialMeter(0), stunTimer(0)
 {
-	x = 100;
-	y = 100;
-	width = 50;
-	height = 50;
-	speed = 5;
-	health = 100;
-	isPlayer1 = true;
-	
-	// Initialize gravity variables
-	velocityY = 0;
-	gravity = 0.5f;
-	isOnGround = false;
-	groundLevel = GetScreenHeight() - 50;
+    originalHeight = height;
 }
 
-Player::Player(int startX, int startY, bool isFirstPlayer)
+void Player::Update() 
 {
-	x = startX;
-	y = startY;
-	width = 50;
-	height = 50;
-	speed = 5;
-	health = 100;
-	isPlayer1 = isFirstPlayer;
-	
-	// Initialize gravity variables
-	velocityY = 0;
-	gravity = 0.5f;
-	isOnGround = false;
-	groundLevel = GetScreenHeight() - 50;
+    // Don't allow movement during attack animation or when stunned
+    if (attackTimer <= 0 && stunTimer <= 0) {
+        // Reset velocity
+        velocityX = 0;
+        
+        // Player 1 controls (WASD + QEF)
+        if (isPlayer1) {
+            // Movement
+            if (IsKeyDown(KEY_A) && !isDucking && !isBlocking) {
+                Move(-1);
+                facingRight = false;
+            }
+            if (IsKeyDown(KEY_D) && !isDucking && !isBlocking) {
+                Move(1);
+                facingRight = true;
+            }
+            
+            // Ducking
+            Duck(IsKeyDown(KEY_S));
+            
+            // Blocking
+            Block(IsKeyDown(KEY_S) && (IsKeyDown(KEY_A) || IsKeyDown(KEY_D)));
+            
+            // Jumping
+            if (IsKeyPressed(KEY_W) && !isJumping && !isDucking) {
+                Jump();
+            }
+            
+            // Attacks
+            if (IsKeyPressed(KEY_Q) && !isJumping && !isDucking && !isBlocking) {
+                Punch();
+            }
+            if (IsKeyPressed(KEY_E) && !isBlocking) {
+                Kick();
+            }
+            if (IsKeyPressed(KEY_F) && specialMeter >= 100) {
+                SpecialAttack();
+            }
+        }
+        // Player 2 controls (Arrow keys + ,./)
+        else {
+            // Movement
+            if (IsKeyDown(KEY_LEFT) && !isDucking && !isBlocking) {
+                Move(-1);
+                facingRight = false;
+            }
+            if (IsKeyDown(KEY_RIGHT) && !isDucking && !isBlocking) {
+                Move(1);
+                facingRight = true;
+            }
+            
+            // Ducking
+            Duck(IsKeyDown(KEY_DOWN));
+            
+            // Blocking
+            Block(IsKeyDown(KEY_DOWN) && (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_RIGHT)));
+            
+            // Jumping
+            if (IsKeyPressed(KEY_UP) && !isJumping && !isDucking) {
+                Jump();
+            }
+            
+            // Attacks
+            if (IsKeyPressed(KEY_COMMA) && !isJumping && !isDucking && !isBlocking) {
+                Punch();
+            }
+            if (IsKeyPressed(KEY_PERIOD) && !isBlocking) {
+                Kick();
+            }
+            if (IsKeyPressed(KEY_SLASH) && specialMeter >= 100) {
+                SpecialAttack();
+            }
+        }
+    }
+    
+    // Apply gravity
+    velocityY += GRAVITY;
+    
+    // Update position
+    x += velocityX;
+    y += velocityY;
+    
+    // Ground collision
+    if (y + height > GetScreenHeight() - 50) {
+        y = GetScreenHeight() - 50 - height;
+        velocityY = 0;
+        isJumping = false;
+    }
+    
+    // Screen boundaries
+    if (x < 0) x = 0;
+    if (x + width > GetScreenWidth()) x = GetScreenWidth() - width;
+    
+    // Update attack timer
+    if (attackTimer > 0) {
+        attackTimer -= GetFrameTime();
+        if (attackTimer <= 0) {
+            currentState = State::IDLE;
+        }
+    }
+    
+    // Update stun timer
+    if (stunTimer > 0) {
+        stunTimer -= GetFrameTime();
+    }
+    
+    // Gradually increase special meter
+    if (specialMeter < 100) {
+        specialMeter += 0.1f;
+    }
 }
 
-void Player::HandleInput()
+void Player::Draw() 
 {
-	if (isPlayer1) {
-		// WASD controls for player 1
-		if (IsKeyDown(KEY_D)) x += speed;
-		if (IsKeyDown(KEY_A)) x -= speed;
-		
-		// Jump with W key
-		if (IsKeyDown(KEY_W) && isOnGround) {
-			Jump();
-		}
-	} else {
-		// Arrow keys for player 2
-		if (IsKeyDown(KEY_RIGHT)) x += speed;
-		if (IsKeyDown(KEY_LEFT)) x -= speed;
-		
-		// Jump with Up key
-		if (IsKeyDown(KEY_UP) && isOnGround) {
-			Jump();
-		}
-	}
+    Color playerColor = isPlayer1 ? RED : BLUE;
+    
+    // Draw player
+    if (isBlocking) {
+        // Darker color when blocking
+        playerColor.a = 150;
+    }
+    
+    if (stunTimer > 0) {
+        // Flash when hit
+        if ((int)(stunTimer * 10) % 2 == 0) {
+            playerColor = WHITE;
+        }
+    }
+    
+    // Draw the player rectangle
+    DrawRectangle(x, y, width, height, playerColor);
+    
+    // Draw facing direction indicator (eyes)
+    float eyeX = facingRight ? x + width * 0.7f : x + width * 0.3f;
+    DrawCircle(eyeX, y + height * 0.2f, 5, WHITE);
+    
+    // Draw attack hitbox for debugging
+    if (IsAttacking()) {
+        Rectangle hitbox = GetAttackHitbox();
+        DrawRectangleLines(hitbox.x, hitbox.y, hitbox.width, hitbox.height, YELLOW);
+    }
+    
+    // Draw special meter
+    DrawRectangle(x, y - 10, width * (specialMeter / 100.0f), 5, YELLOW);
+    
+    // Draw state text for debugging
+    const char* stateText = "";
+    switch (currentState) {
+        case State::IDLE: stateText = "IDLE"; break;
+        case State::WALKING: stateText = "WALK"; break;
+        case State::JUMPING: stateText = "JUMP"; break;
+        case State::DUCKING: stateText = "DUCK"; break;
+        case State::BLOCKING: stateText = "BLOCK"; break;
+        case State::PUNCHING: stateText = "PUNCH"; break;
+        case State::KICKING: stateText = "KICK"; break;
+        case State::SPECIAL_ATTACK: stateText = "SPECIAL"; break;
+        case State::HURT: stateText = "HURT"; break;
+    }
+    DrawText(stateText, x, y - 20, 12, WHITE);
 }
 
-void Player::Jump()
+void Player::Move(float direction) 
 {
-	velocityY = -12.0f; // Negative velocity means upward movement
-	isOnGround = false;
+    velocityX = direction * MOVE_SPEED;
+    if (currentState != State::PUNCHING && currentState != State::KICKING) {
+        currentState = State::WALKING;
+    }
 }
 
-void Player::Update()
+void Player::Jump() 
 {
-	HandleInput();
-	
-	// Apply gravity
-	velocityY += gravity;
-	y += velocityY;
-	
-	// Check if player has landed on the ground
-	if (y + height >= groundLevel) {
-		y = groundLevel - height;
-		velocityY = 0;
-		isOnGround = true;
-	} else {
-		isOnGround = false;
-	}
-	
-	// Keep player within screen bounds
-	const int screenWidth = GetScreenWidth();
-	
-	if (x < 0) x = 0;
-	if (x + width > screenWidth) x = screenWidth - width;
-	
-	// Only restrict top boundary, not bottom (gravity handles that)
-	if (y < 0) y = 0;
+    velocityY = JUMP_FORCE;
+    isJumping = true;
+    currentState = State::JUMPING;
 }
 
-void Player::Draw()
+void Player::Duck(bool isDucking) 
 {
-	// Draw player with different colors based on which player it is
-	Color playerColor = isPlayer1 ? RED : BLUE;
-	DrawRectangle(x, y, width, height, playerColor);
+    this->isDucking = isDucking;
+    
+    if (isDucking) {
+        height = originalHeight * DUCK_HEIGHT_RATIO;
+        y += originalHeight - height; // Adjust y position
+        currentState = State::DUCKING;
+    } else if (currentState == State::DUCKING) {
+        height = originalHeight;
+        y -= originalHeight - height; // Restore y position
+        currentState = State::IDLE;
+    }
+}
+
+void Player::Block(bool isBlocking) 
+{
+    this->isBlocking = isBlocking;
+    if (isBlocking) {
+        currentState = State::BLOCKING;
+    }
+}
+
+void Player::Punch() 
+{
+    attackTimer = ATTACK_DURATION;
+    currentState = State::PUNCHING;
+    // Add a small amount to special meter
+    specialMeter = std::min(specialMeter + 5.0f, 100.0f);
+}
+
+void Player::Kick() 
+{
+    attackTimer = ATTACK_DURATION * 1.5f; // Kicks last longer
+    currentState = State::KICKING;
+    // Add a small amount to special meter
+    specialMeter = std::min(specialMeter + 7.0f, 100.0f);
+}
+
+void Player::SpecialAttack() 
+{
+    attackTimer = ATTACK_DURATION * 2.0f; // Special attacks last even longer
+    currentState = State::SPECIAL_ATTACK;
+    specialMeter = 0; // Reset special meter
+}
+
+Rectangle Player::GetRect() const 
+{
+    return { x, y, width, height };
+}
+
+Rectangle Player::GetAttackHitbox() const 
+{
+    if (!IsAttacking()) {
+        return { 0, 0, 0, 0 }; // No hitbox if not attacking
+    }
+    
+    float hitboxWidth = width;
+    float hitboxHeight = height * 0.3f;
+    float hitboxX = x;
+    float hitboxY = y + height * 0.3f;
+    
+    // Adjust hitbox based on facing direction
+    if (facingRight) {
+        hitboxX = x + width; // Position hitbox to the right of player
+    } else {
+        hitboxX = x - hitboxWidth; // Position hitbox to the left of player
+    }
+    
+    // Different hitbox for different attacks
+    if (currentState == State::PUNCHING) {
+        // Position punch hitbox higher so it can be ducked under
+        hitboxY = y + height * 0.1f; // Much higher position for punch
+        hitboxHeight = height * 0.3f; // Shorter but higher hitbox
+    } else if (currentState == State::KICKING) {
+        hitboxWidth = width * 1.5f;
+        hitboxHeight = height * 0.2f;
+        hitboxY = y + height * 0.7f; // Lower for kick
+    } else if (currentState == State::SPECIAL_ATTACK) {
+        hitboxWidth = width * 2.0f;
+        hitboxHeight = height * 0.8f;
+    }
+    
+    return { hitboxX, hitboxY, hitboxWidth, hitboxHeight };
+}
+
+int Player::GetHealth() const 
+{
+    return health;
+}
+
+float Player::GetWidth() const 
+{
+    return width;
+}
+
+bool Player::IsAttacking() const 
+{
+    return (currentState == State::PUNCHING || 
+            currentState == State::KICKING || 
+            currentState == State::SPECIAL_ATTACK) && 
+           attackTimer > 0;
+}
+
+bool Player::IsBlocking() const 
+{
+    return isBlocking;
+}
+
+void Player::TakeDamage(int amount, bool attackFromRight) 
+{
+    // Reduce damage if blocking
+    if (isBlocking) {
+        amount = amount / 2;
+    }
+    
+    health -= amount;
+    if (health < 0) health = 0;
+    
+    // Apply hit stun
+    stunTimer = 0.2f;
+    currentState = State::HURT;
+    
+    // Knockback based on attack direction
+    // If attack comes from right, knockback to the left and vice versa
+    velocityX = attackFromRight ? 5.0f : -5.0f;
+    
+    // Add to opponent's special meter
+    specialMeter = std::min(specialMeter + amount, 100.0f);
+}
+
+void Player::Reset(float newX, float newY, bool isFirstPlayer) 
+{
+    // Reset position
+    x = newX;
+    y = newY;
+    
+    // Reset movement
+    velocityX = 0;
+    velocityY = 0;
+    
+    // Reset state
+    health = 200;
+    isPlayer1 = isFirstPlayer;
+    facingRight = isFirstPlayer;
+    isJumping = false;
+    isDucking = false;
+    isBlocking = false;
+    currentState = State::IDLE;
+    attackTimer = 0;
+    specialMeter = 0;
+    stunTimer = 0;
+    
+    // Reset height in case player was ducking
+    height = originalHeight;
+}
+
+Player::State Player::GetCurrentState() const 
+{
+    return currentState;
+}
+
+bool Player::IsFacingRight() const 
+{
+    return facingRight;
 }
