@@ -6,7 +6,7 @@
 - [x] Implement controls
 - [ ] Implement Animation state machine
 - [ ] Implement Fighting mechanics
-- [ ] Player 0 (blue) wins every time
+- [x] Player 0 (blue) wins every time
 
 ### Members: 
 - Aayan Sultan (24K-2015)

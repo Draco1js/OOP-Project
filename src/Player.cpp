@@ -19,9 +19,21 @@ void Player::Update()
         // Reset velocity
         velocityX = 0;
         
-        // Player 1 controls (WASD + QEF)
+        // Reset blocking state - will be set if block button is pressed
+        isBlocking = false;
+        
+        // Player 1 controls (WASD + QEF + B for block)
         if (isPlayer1) {
-            // Movement
+            // Check for ducking first
+            bool wantsToDuck = IsKeyDown(KEY_S);
+            Duck(wantsToDuck);
+            
+            // Dedicated blocking button (B)
+            if (IsKeyDown(KEY_B) && !isDucking && !isJumping) {
+                Block();
+            }
+            
+            // Movement - only if not ducking and not blocking
             if (IsKeyDown(KEY_A) && !isDucking && !isBlocking) {
                 Move(-1);
                 facingRight = false;
@@ -31,14 +43,8 @@ void Player::Update()
                 facingRight = true;
             }
             
-            // Ducking
-            Duck(IsKeyDown(KEY_S));
-            
-            // Blocking
-            Block(IsKeyDown(KEY_S) && (IsKeyDown(KEY_A) || IsKeyDown(KEY_D)));
-            
             // Jumping
-            if (IsKeyPressed(KEY_W) && !isJumping && !isDucking) {
+            if (IsKeyPressed(KEY_W) && !isJumping && !isDucking && !isBlocking) {
                 Jump();
             }
             
@@ -46,16 +52,25 @@ void Player::Update()
             if (IsKeyPressed(KEY_Q) && !isJumping && !isDucking && !isBlocking) {
                 Punch();
             }
-            if (IsKeyPressed(KEY_E) && !isBlocking) {
+            if (IsKeyPressed(KEY_E) && !isBlocking && !isDucking) {
                 Kick();
             }
-            if (IsKeyPressed(KEY_F) && specialMeter >= 100) {
+            if (IsKeyPressed(KEY_F) && specialMeter >= 100 && !isBlocking) {
                 SpecialAttack();
             }
         }
-        // Player 2 controls (Arrow keys + ,./)
+        // Player 2 controls (Arrow keys + ,./ + M for block)
         else {
-            // Movement
+            // Check for ducking first
+            bool wantsToDuck = IsKeyDown(KEY_DOWN);
+            Duck(wantsToDuck);
+            
+            // Dedicated blocking button (M)
+            if (IsKeyDown(KEY_M) && !isDucking && !isJumping) {
+                Block();
+            }
+            
+            // Movement - only if not ducking and not blocking
             if (IsKeyDown(KEY_LEFT) && !isDucking && !isBlocking) {
                 Move(-1);
                 facingRight = false;
@@ -65,14 +80,8 @@ void Player::Update()
                 facingRight = true;
             }
             
-            // Ducking
-            Duck(IsKeyDown(KEY_DOWN));
-            
-            // Blocking
-            Block(IsKeyDown(KEY_DOWN) && (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_RIGHT)));
-            
             // Jumping
-            if (IsKeyPressed(KEY_UP) && !isJumping && !isDucking) {
+            if (IsKeyPressed(KEY_UP) && !isJumping && !isDucking && !isBlocking) {
                 Jump();
             }
             
@@ -80,10 +89,10 @@ void Player::Update()
             if (IsKeyPressed(KEY_COMMA) && !isJumping && !isDucking && !isBlocking) {
                 Punch();
             }
-            if (IsKeyPressed(KEY_PERIOD) && !isBlocking) {
+            if (IsKeyPressed(KEY_PERIOD) && !isBlocking && !isDucking) {
                 Kick();
             }
-            if (IsKeyPressed(KEY_SLASH) && specialMeter >= 100) {
+            if (IsKeyPressed(KEY_SLASH) && specialMeter >= 100 && !isBlocking) {
                 SpecialAttack();
             }
         }
@@ -190,27 +199,32 @@ void Player::Jump()
     currentState = State::JUMPING;
 }
 
-void Player::Duck(bool isDucking) 
+void Player::Duck(bool shouldDuck) 
 {
-    this->isDucking = isDucking;
-    
-    if (isDucking) {
-        height = originalHeight * DUCK_HEIGHT_RATIO;
-        y += originalHeight - height; // Adjust y position
-        currentState = State::DUCKING;
-    } else if (currentState == State::DUCKING) {
-        height = originalHeight;
-        y -= originalHeight - height; // Restore y position
-        currentState = State::IDLE;
+    // Only process if there's a change in ducking state
+    if (shouldDuck != isDucking) {
+        isDucking = shouldDuck;
+        
+        if (shouldDuck) {
+            height = originalHeight * DUCK_HEIGHT_RATIO;
+            y += originalHeight - height; // Adjust y position
+            currentState = State::DUCKING;
+        } else {
+            height = originalHeight;
+            y -= originalHeight - height; // Restore y position
+            
+            // Only change state if we're currently ducking
+            if (currentState == State::DUCKING) {
+                currentState = State::IDLE;
+            }
+        }
     }
 }
 
-void Player::Block(bool isBlocking) 
+void Player::Block() 
 {
-    this->isBlocking = isBlocking;
-    if (isBlocking) {
-        currentState = State::BLOCKING;
-    }
+    isBlocking = true;
+    currentState = State::BLOCKING;
 }
 
 void Player::Punch() 
