@@ -1,5 +1,6 @@
 #pragma once
 #include <raylib.h>
+#include <string>
 
 class Player {
 	public:
@@ -39,6 +40,11 @@ class Player {
 		float GetWidth() const;
 		bool IsAttacking() const;
 		bool IsBlocking() const;
+		std::string GetAnimationKey() const; // Add this method
+		
+		// Character methods
+		void SetCharacter(const std::string& name); // Add this method
+		std::string GetCharacterName() const; // Add this method
 		
 		// Take damage
 		void TakeDamage(int amount, bool attackFromRight);
@@ -63,6 +69,11 @@ class Player {
 		float attackTimer;
 		float specialMeter; // For special attacks
 		float stunTimer; // For hit stun
+		
+		// Animation variables
+		std::string characterName; // Add this
+		int currentFrame; // Add this
+		float frameTimer; // Add this
 		
 		// Constants
 		const float MOVE_SPEED = 5.0f;
