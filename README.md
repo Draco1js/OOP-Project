@@ -13,8 +13,11 @@
 - [X] FEATURE: when attacking top-left text should be removed.
 - [X] FEATURE: Duck attack not working
 - [ ] Jump state, stuck issue
-- [ ] Add background
-- [ ] Add sound effects
+- [x] Add background music
+- [x] background music pause
+- [x] Add Crowd effect music
+- [x] Add Start delay and end
+- [x] Add sound effects
 - [ ] ESC button should not cancel game directly
 - [ ] FEATURE: Animations and spritesheets
 
