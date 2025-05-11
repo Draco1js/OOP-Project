@@ -42,6 +42,13 @@ private:
     // Background texture
     Texture2D backgroundTexture;
 
+    // Background crowd sound
+    Music crowdSound;
+
+    // Sound effects
+    Sound punchSound; // Sound effect for punches
+    Sound kickSound;  // Sound effect for kicks
+
     // Private methods for each state
     void UpdateMenu();
     void UpdateGameplay();

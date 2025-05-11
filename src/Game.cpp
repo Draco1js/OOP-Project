@@ -46,6 +46,16 @@ Game::Game() : currentState(GameState::MENU),
         200.0f,                                // width
         20.0f                                  // height
     };
+
+    // Load crowd sound
+    InitAudioDevice();
+    crowdSound = LoadMusicStream("assets/sprites/Assets/sound/Crowd.ogg");
+    SetMusicVolume(crowdSound, 0.1f); // Set volume to 20%
+    PlayMusicStream(crowdSound);
+
+    // Load sound effects
+    punchSound = LoadSound("assets/sprites/Assets/sound/Punch.ogg");
+    kickSound = LoadSound("assets/sprites/Assets/sound/Kick.ogg");
 }
 
 // Destructor
@@ -53,6 +63,14 @@ Game::~Game()
 {
     // Unload textures
     UnloadTexture(backgroundTexture);
+
+    // Unload crowd sound
+    UnloadMusicStream(crowdSound);
+    CloseAudioDevice();
+
+    // Unload sound effects
+    UnloadSound(punchSound);
+    UnloadSound(kickSound);
 }
 
 Game::GameState Game::GetCurrentState()
@@ -187,6 +205,9 @@ void Game::UpdateGameplay()
         ResetGameplay();
         currentState = GameState::MENU;
     }
+
+    // Update crowd sound
+    UpdateMusicStream(crowdSound);
 }
 
 void Game::CheckAttackCollisions()
@@ -206,10 +227,11 @@ void Game::CheckAttackCollisions()
             if (player1.GetCurrentState() == Player::State::KICKING)
             {
                 damage = 7;
+                PlaySound(kickSound); // Play kick sound
             }
-            else if (player1.GetCurrentState() == Player::State::SPECIAL_ATTACK)
+            else
             {
-                damage = 15;
+                PlaySound(punchSound); // Play punch sound
             }
 
             // Check if attack is from behind (can't block attacks from behind)
@@ -239,10 +261,11 @@ void Game::CheckAttackCollisions()
             if (player2.GetCurrentState() == Player::State::KICKING)
             {
                 damage = 7;
+                PlaySound(kickSound); // Play kick sound
             }
-            else if (player2.GetCurrentState() == Player::State::SPECIAL_ATTACK)
+            else
             {
-                damage = 15;
+                PlaySound(punchSound); // Play punch sound
             }
 
             // Check if attack is from behind (can't block attacks from behind)

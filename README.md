@@ -10,8 +10,12 @@
 - [x] BUG: Player 0 (blue) wins every time
 - [x] BUG: Blocking is buggy when crouching, refactor to have separate key
 - [x] BUG: Duck-punch does not work
-- [ ] FEATURE: when attacking top-left text should be removed.
-- [ ] FEATURE: Duck attack not working
+- [X] FEATURE: when attacking top-left text should be removed.
+- [X] FEATURE: Duck attack not working
+- [ ] Jump state, stuck issue
+- [ ] Add background
+- [ ] Add sound effects
+- [ ] ESC button should not cancel game directly
 - [ ] FEATURE: Animations and spritesheets
 
 ### Members:
