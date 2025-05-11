@@ -89,9 +89,11 @@ void UnloadCharacters() {
     if (!charactersLoaded) return;
     
     for (auto& charD : characters) {
-        auto& charNameta = charD.first;
+        auto& charName = charD.first;
         auto& charData = charD.second;
-        for (auto& [animName, animData] : charData.animations) {
+        for (auto& animD : charData.animations) {
+            auto& animName = animD.first;
+            auto& animData = animD.second;
             for (auto& texture : animData.frames) {
                 UnloadTexture(texture);
             }
@@ -207,7 +209,7 @@ void Player::Update()
             (
                 (IsKeyDown(KEY_Q) && isPlayer1) ||
                 (IsKeyDown(KEY_COMMA) && !isPlayer1)) &&
-            !isJumping && !isDucking && !isBlocking)
+                !isBlocking)
         {
             Punch();
         }
@@ -216,7 +218,7 @@ void Player::Update()
             (
                 (IsKeyDown(KEY_E) && isPlayer1) ||
                 (IsKeyDown(KEY_PERIOD) && !isPlayer1)) &&
-            !isBlocking && !isDucking)
+                !isBlocking)
         {
             Kick();
         }

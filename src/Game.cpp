@@ -142,15 +142,15 @@ void Game::UpdateGameplay()
     // Check for attack collisions
     CheckAttackCollisions();
 
-    // Debug output
-    if (player1.IsAttacking())
-    {
-        DrawText("Player 1 is attacking", 10, 10, 20, WHITE);
-    }
-    if (player2.IsAttacking())
-    {
-        DrawText("Player 2 is attacking", 10, 40, 20, WHITE);
-    }
+    // // Debug output
+    // if (player1.IsAttacking())
+    // {
+    //     DrawText("Player 1 is attacking", 10, 10, 20, WHITE);
+    // }
+    // if (player2.IsAttacking())
+    // {
+    //     DrawText("Player 2 is attacking", 10, 40, 20, WHITE);
+    // }
 
     // Check for collisions between players
     if (CheckCollisionRecs(player1.GetRect(), player2.GetRect()))
