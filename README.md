@@ -1,41 +1,43 @@
-# OOP Project
+# OOP Project: 2D Fighting Game with Raylib
 
 ## TODO:
 
 - [x] FEATURE: Implement Scene Switching
 - [x] FEATURE: Implement Players
 - [x] FEATURE: Implement Enemies
-- [ ] FEATURE: Implement Animation state machine
+- [x] FEATURE: Implement Animation state machine
 - [x] FEATURE: Implement Fighting mechanics
+- [x] FEATURE: Animations and spritesheets
+- [x] FEATURE: CI/CD pipeline
 - [x] BUG: Player 0 (blue) wins every time
 - [x] BUG: Blocking is buggy when crouching, refactor to have separate key
 - [x] BUG: Duck-punch does not work
-- [ ] FEATURE: when attacking top-left text should be removed.
-- [ ] FEATURE: Duck attack not working
-- [ ] FEATURE: Animations and spritesheets
+- [ ] BUG: Duck attack not working
+- [ ] BUG: Some animation states not resetting to idle
 
 ### Members:
 
 - Aayan Sultan (24K-2015)
 - Zumair Shamsi (24K-2040)
-- Devish Kumar (24K-????)
-
+- Devish Kumar (24K-2022)
 
 ### Project Work Division:
 
 - Devish:
-	- Setup movement controls
-	- Setup Fonts and Menus
+    - Setup movement controls
+    - Setup Fonts and Menus
+    - VSCode configurations
 - Zumair:
-	- Game Loop
-	- Game Scenes
-	- Window Creation
+    - Game Loop
+    - Game Scenes
+    - Window Creation
+    - Main class architecture
 - Aayan:
-	- Setup player mechanics
-	- Setup hitboxes
-	- Setup Physics
-	- Setup Fighting mechanics
-	- Todo: Setup Animation state machine
+    - Setup player mechanics
+    - Setup hitboxes
+    - Setup Physics
+    - Setup Fighting mechanics
+    - CI/CD pipeline 
 
 
 ### UML Diagram:
