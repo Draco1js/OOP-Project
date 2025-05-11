@@ -2,20 +2,22 @@
 #include <raylib.h>
 #include <string>
 
-class Player {
-	public:
-		// Add player states
-		enum class State {
-			IDLE,
-			WALKING,
-			JUMPING,
-			DUCKING,
-			PUNCHING,
-			KICKING,
-			SPECIAL_ATTACK,
-			BLOCKING,
-			HURT
-		};
+class Player
+{
+public:
+	// Add player states
+	enum class State
+	{
+		IDLE,
+		WALKING,
+		JUMPING,
+		DUCKING,
+		PUNCHING,
+		KICKING,
+		SPECIAL_ATTACK,
+		BLOCKING,
+		HURT
+	};
 
 		// Constructor
 		Player(float x, float y, bool isPlayer1);
