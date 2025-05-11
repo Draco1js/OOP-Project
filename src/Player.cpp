@@ -52,7 +52,9 @@ void LoadCharacters() {
         charData.name = charName;
         
         // Load each animation type
-        for (const auto& [animKey, animPrefix] : animationTypes) {
+        for (const auto& anim : animationTypes) {
+            auto& animKey = anim.first;
+            auto& animPrefix = anim.second;
             AnimationData animData;
             int frameCount = 1;
             
@@ -86,7 +88,9 @@ void LoadCharacters() {
 void UnloadCharacters() {
     if (!charactersLoaded) return;
     
-    for (auto& [charName, charData] : characters) {
+    for (auto& charD : characters) {
+        auto& charNameta = charD.first;
+        auto& charData = charD.second;
         for (auto& [animName, animData] : charData.animations) {
             for (auto& texture : animData.frames) {
                 UnloadTexture(texture);
