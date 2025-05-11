@@ -8,7 +8,9 @@ Game::Game() : currentState(GameState::MENU),
                player2(600, 400, false),
                winner(0),
                gameOverDelay(0.0f),
-               selectedButton(0)
+               selectedButton(0),
+               isMainTrackPaused(false),
+               startDelay(3.0f) // Initialize 3-second delay
 {
     // Initialize menu buttons
     int screenWidth = GetScreenWidth();
@@ -50,12 +52,21 @@ Game::Game() : currentState(GameState::MENU),
     // Load crowd sound
     InitAudioDevice();
     crowdSound = LoadMusicStream("assets/sprites/Assets/sound/Crowd.ogg");
-    SetMusicVolume(crowdSound, 0.1f); // Set volume to 20%
+    SetMusicVolume(crowdSound, 0.1f); // Set volume to 10%
     PlayMusicStream(crowdSound);
 
     // Load sound effects
     punchSound = LoadSound("assets/sprites/Assets/sound/Punch.ogg");
     kickSound = LoadSound("assets/sprites/Assets/sound/Kick.ogg");
+
+    // Load main menu music
+    mainTrack1 = LoadMusicStream("assets/sprites/Assets/sound/MainMenu.ogg");
+    SetMusicVolume(mainTrack1, 0.2f); // Set volume to 10%
+    PlayMusicStream(mainTrack1);
+
+    // Load start and end sound effects
+    startSound = LoadSound("assets/sprites/Assets/sound/Start.ogg");
+    endSound = LoadSound("assets/sprites/Assets/sound/End.ogg");
 }
 
 // Destructor
@@ -71,6 +82,13 @@ Game::~Game()
     // Unload sound effects
     UnloadSound(punchSound);
     UnloadSound(kickSound);
+
+    // Unload main menu music
+    UnloadMusicStream(mainTrack1);
+
+    // Unload start and end sound effects
+    UnloadSound(startSound);
+    UnloadSound(endSound);
 }
 
 Game::GameState Game::GetCurrentState()
@@ -106,6 +124,23 @@ void Game::Update()
 
 void Game::UpdateMenu()
 {
+    // Update main menu music
+    UpdateMusicStream(mainTrack1);
+
+    // Handle music pause/resume with 'P' key
+    if (IsKeyPressed(KEY_P))
+    {
+        isMainTrackPaused = !isMainTrackPaused;
+        if (isMainTrackPaused)
+        {
+            PauseMusicStream(mainTrack1);
+        }
+        else
+        {
+            ResumeMusicStream(mainTrack1);
+        }
+    }
+
     // Keyboard navigation
     if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S))
     {
@@ -121,6 +156,7 @@ void Game::UpdateMenu()
     {
         if (selectedButton == 0)
         {
+            StopMusicStream(mainTrack1); // Stop main menu music
             currentState = GameState::GAMEPLAY;
         }
         else
@@ -138,6 +174,7 @@ void Game::UpdateMenu()
         selectedButton = 0; // Highlight on hover
         if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
         {
+            StopMusicStream(mainTrack1); // Stop main menu music
             currentState = GameState::GAMEPLAY;
         }
     }
@@ -155,6 +192,26 @@ void Game::UpdateMenu()
 
 void Game::UpdateGameplay()
 {
+    // Handle 3-second start delay
+    if (startDelay > 0.0f)
+    {
+        if (startDelay == 3.0f) // Play start sound only once
+        {
+            PlaySound(startSound);
+        }
+
+        char countdownText[32];
+        std::snprintf(countdownText, sizeof(countdownText), "Starting in: %.1f", startDelay);
+        DrawText(countdownText, GetScreenWidth() / 2 - MeasureText(countdownText, 20) / 2, GetScreenHeight() / 2, 20, WHITE);
+        startDelay -= GetFrameTime();
+
+        if (startDelay <= 0.0f)
+        {
+            startDelay = 0.0f; // Ensure it doesn't go negative
+        }
+        return; // Skip gameplay logic until delay is over
+    }
+
     player1.Update();
     player2.Update();
 
@@ -170,6 +227,9 @@ void Game::UpdateGameplay()
     // Check if any player has zero health
     if (player1.GetHealth() <= 0 || player2.GetHealth() <= 0)
     {
+        // Play end sound
+        PlaySound(endSound);
+
         // Set the winner based on who has health remaining
         if (player1.GetHealth() <= 0)
         {
@@ -455,4 +515,5 @@ void Game::ResetGameplay()
     // Reset winner and delay timer
     winner = 0;
     gameOverDelay = 0.0f;
+    startDelay = 3.0f; // Reset start delay
 }
