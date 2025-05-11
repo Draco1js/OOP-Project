@@ -48,6 +48,15 @@ private:
     // Sound effects
     Sound punchSound; // Sound effect for punches
     Sound kickSound;  // Sound effect for kicks
+    Sound startSound; // Sound effect for game start
+    Sound endSound;   // Sound effect for game end
+
+    // Music for the main menu
+    Music mainTrack1;
+    bool isMainTrackPaused = false; // Tracks if main menu music is paused
+
+    // Timer for 3-second pause before gameplay
+    float startDelay = 3.0f;
 
     // Private methods for each state
     void UpdateMenu();
