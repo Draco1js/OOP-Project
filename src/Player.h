@@ -1,5 +1,6 @@
 #pragma once
 #include <raylib.h>
+#include "Loader.h"
 #include <string>
 
 class Player

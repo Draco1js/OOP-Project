@@ -30,7 +30,7 @@ Game::Game() : currentState(GameState::MENU),
     // ConvertAllAssetsToCode("assets");
 
     // Simple one-liner to load texture with code fallback
-    backgroundTexture = LoadTexture("assets/insbg.gif");
+    backgroundTexture = LoadGameTexture("assets/insbg.gif");
 
     // Initialize health bars
     player1HealthBar = {
