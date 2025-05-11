@@ -2,4 +2,4 @@
 #include <raylib.h>
 #include <stdio.h>
 
-Texture2D LoadTexture(const char *imagePath);
+Texture2D LoadGameTexture(const char *imagePath);

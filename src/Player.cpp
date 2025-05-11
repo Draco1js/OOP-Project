@@ -63,7 +63,7 @@ void LoadCharacters() {
                 std::string framePath = "assets/sprites/Assets/" + charName + "/" + animPrefix + std::to_string(frameCount) + ".png";
                 if (!FileExists(framePath.c_str())) break;
                 
-                Texture2D texture = LoadTexture(framePath.c_str());
+                Texture2D texture = LoadGameTexture(framePath.c_str());
                 animData.frames.push_back(texture);
                 frameCount++;
             }

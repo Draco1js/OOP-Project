@@ -250,7 +250,7 @@ endif
 
 # Define include paths for required headers
 # NOTE: Several external required libraries (stb and others)
-INCLUDE_PATHS = -I. -I./embedded -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external
+INCLUDE_PATHS = -I. -I$(RAYLIB_PATH)/src -I$(RAYLIB_PATH)/src/external
 ifneq ($(wildcard /opt/homebrew/include/.*),)
     INCLUDE_PATHS += -I/opt/homebrew/include
 endif
@@ -366,16 +366,11 @@ rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst 
 # Define all source files required
 SRC_DIR = src
 OBJ_DIR = obj
-EMBEDDED_DIR = embedded
-
-# Create embedded directory if it doesn't exist
-$(shell mkdir -p $(EMBEDDED_DIR))
 
 # Define all object files from source files
 SRC = $(call rwildcard, *.c, *.h)
-EMBEDDED_SRC = $(wildcard $(EMBEDDED_DIR)/*.h)
 #OBJS = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
-OBJS ?= main.c src/*.cpp $(EMBEDDED_SRC)
+OBJS ?= main.c
 
 # For Android platform we call a custom Makefile.Android
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
@@ -423,4 +418,3 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 	del *.o *.html *.js
 endif
 	@echo Cleaning done
-

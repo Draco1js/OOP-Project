@@ -4,8 +4,8 @@
 #include <sys/stat.h>
 #include <ctype.h> // For isalnum()
 
-// Drop-in replacement for LoadTexture that uses code when available
-Texture2D LoadTexture(const char *imagePath)
+// Drop-in replacement for LoadGameTexture that uses code when available
+Texture2D LoadGameTexture(const char *imagePath)
 {
     Texture2D texture = {0};
 
