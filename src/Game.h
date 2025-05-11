@@ -1,6 +1,7 @@
 #pragma once
 #include "raylib.h"
 #include "Player.h"
+#include<string>
 
 class Game
 {
@@ -29,6 +30,8 @@ private:
     Player player1; // First player (WASD controls)
     Player player2; // Second player (Arrow keys)
     int winner;     // 1 for player1, 2 for player2, 0 for no winner yet
+    float gameOverDelay;
+    const float GAME_OVER_DELAY = 3.0f;
 
     // Menu variables
     Rectangle playButton;

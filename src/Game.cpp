@@ -7,6 +7,7 @@ Game::Game() : currentState(GameState::MENU),
                player1(100, 400, true),
                player2(600, 400, false),
                winner(0),
+               gameOverDelay(0.0f),
                selectedButton(0)
 {
     // Initialize menu buttons
@@ -142,16 +143,6 @@ void Game::UpdateGameplay()
     // Check for attack collisions
     CheckAttackCollisions();
 
-    // // Debug output
-    // if (player1.IsAttacking())
-    // {
-    //     DrawText("Player 1 is attacking", 10, 10, 20, WHITE);
-    // }
-    // if (player2.IsAttacking())
-    // {
-    //     DrawText("Player 2 is attacking", 10, 40, 20, WHITE);
-    // }
-
     // Check for collisions between players
     if (CheckCollisionRecs(player1.GetRect(), player2.GetRect()))
     {
@@ -170,7 +161,24 @@ void Game::UpdateGameplay()
         {
             winner = 1; // Player 1 wins
         }
-        currentState = GameState::GAMEOVER;
+
+        // Start the delay timer instead of immediately changing state
+        gameOverDelay = GAME_OVER_DELAY;
+    }
+
+    // Update game over delay timer if active
+    if (gameOverDelay > 0)
+    {
+        char timerText[32];
+        std::snprintf(timerText, sizeof(timerText), "Timer: %.1f", gameOverDelay);
+        DrawText(timerText, 200, 200, 12, WHITE);
+        gameOverDelay -= GetFrameTime();
+        if (gameOverDelay <= 0)
+        {
+            // Now transition to game over screen after delay
+            currentState = GameState::GAMEOVER;
+        }
+        gameOverDelay -= 1.0f;
     }
 
     // Return to menu and reset game state
@@ -421,6 +429,7 @@ void Game::ResetGameplay()
     player1.Reset(100, 400, true);
     player2.Reset(600, 400, false);
 
-    // Reset winner
+    // Reset winner and delay timer
     winner = 0;
+    gameOverDelay = 0.0f;
 }

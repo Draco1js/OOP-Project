@@ -60,7 +60,7 @@ void LoadCharacters() {
             
             // Try loading frames until we don't find any more
             while (true) {
-                std::string framePath = "assets/" + charName + "/" + animPrefix + std::to_string(frameCount) + ".png";
+                std::string framePath = "assets/sprites/Assets/" + charName + "/" + animPrefix + std::to_string(frameCount) + ".png";
                 if (!FileExists(framePath.c_str())) break;
                 
                 Texture2D texture = LoadTexture(framePath.c_str());
@@ -89,10 +89,8 @@ void UnloadCharacters() {
     if (!charactersLoaded) return;
     
     for (auto& charD : characters) {
-        auto& charName = charD.first;
         auto& charData = charD.second;
         for (auto& animD : charData.animations) {
-            auto& animName = animD.first;
             auto& animData = animD.second;
             for (auto& texture : animData.frames) {
                 UnloadTexture(texture);
@@ -106,7 +104,7 @@ void UnloadCharacters() {
 
 Player::Player(float x, float y, bool isPlayer1)
     : x(x), y(y), velocityX(0), velocityY(0), width(50), height(100),
-      health(1000), isPlayer1(isPlayer1), facingRight(isPlayer1),
+      health(100), isPlayer1(isPlayer1), facingRight(isPlayer1),
       isJumping(false), isDucking(false), isBlocking(false),
       currentState(State::IDLE), attackTimer(0), specialMeter(0), stunTimer(0),
       characterName(isPlayer1 ? "Iori" : "Ryo"), currentFrame(0), frameTimer(0)
@@ -135,11 +133,30 @@ void Player::Update()
         }
     }
 
+    // Ground collision - reset jumping state
+    float groundY = GetScreenHeight() - GROUND_HEIGHT;
+    if (y + height > groundY)
+    {
+        y = groundY - height;
+        velocityY = 0;
+        
+        // If we were jumping, reset to idle state
+        if (isJumping) {
+            isJumping = false;
+            if (currentState == State::JUMPING) {
+                currentState = State::IDLE;
+            }
+        }
+    }
+
     // Don't allow movement during attack animation or when stunned
     if (attackTimer <= 0 && stunTimer <= 0)
     {
-        // Reset velocity
+        // Reset velocity and state to IDLE by default
         velocityX = 0;
+        if (currentState == State::WALKING) {
+            currentState = State::IDLE;
+        }
 
         // Reset blocking state - will be set if block button is pressed
         isBlocking = false;
@@ -239,9 +256,9 @@ void Player::Update()
     y += velocityY;
 
     // Ground collision
-    if (y + height > GetScreenHeight() - 50)
+    if (y + height > groundY)
     {
-        y = GetScreenHeight() - 50 - height;
+        y = groundY - height;
         velocityY = 0;
         isJumping = false;
     }
@@ -279,7 +296,13 @@ std::string Player::GetAnimationKey() const {
     switch (currentState) {
         case State::IDLE: return "IDLE";
         case State::WALKING: 
-            return facingRight ? "WALKING_FORWARD" : "WALKING_BACKWARD";
+            // For Player 1: facingRight = walking forward
+            // For Player 2: facingRight = walking backward (since P2 starts facing left)
+            if (isPlayer1) {
+                return facingRight ? "WALKING_FORWARD" : "WALKING_BACKWARD";
+            } else {
+                return facingRight ? "WALKING_BACKWARD" : "WALKING_FORWARD";
+            }
         case State::JUMPING: return "JUMPING";
         case State::DUCKING: return "DUCKING";
         case State::BLOCKING: return "BLOCKING";
@@ -301,21 +324,16 @@ void Player::Draw()
         const auto& anim = charData.animations.at(animKey);
         Texture2D texture = anim.frames[currentFrame];
         
-        // // Calculate scale and position
-        // float scale = charData.scale;
-        
-        // Flip texture based on facing direction
+        float scale = charData.scale * 0.5f;  
         Rectangle source = { 0, 0, (float)texture.width, (float)texture.height };
-        if (!facingRight) {
+        if ((isPlayer1 && !facingRight) || (!isPlayer1 && facingRight)) {
             source.width *= -1;  // Flip horizontally
         }
-        
-        // Calculate destination rectangle
         Rectangle dest = { 
             x, 
             y, 
-            width, 
-            height 
+            width * scale,
+            height * scale 
         };
         
         // Draw the sprite
@@ -398,7 +416,8 @@ std::string Player::GetCharacterName() const {
 void Player::Move(float direction)
 {
     velocityX = direction * MOVE_SPEED;
-    if (currentState != State::PUNCHING && currentState != State::KICKING)
+    if (currentState != State::PUNCHING && currentState != State::KICKING && 
+        currentState != State::JUMPING && currentState != State::SPECIAL_ATTACK)
     {
         currentState = State::WALKING;
     }
