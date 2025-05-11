@@ -1,6 +1,5 @@
 #include <raylib.h>
 #include "Game.h"
-#include "ImageExport.h"
 
 int main()
 {
@@ -12,8 +11,6 @@ int main()
     InitWindow(screenWidth, screenHeight, "My Game");
     SetTargetFPS(60);
     SetExitKey(KEY_NULL);
-
-    ConvertAllAssetsToCode("assets");
 
     Game game;
 

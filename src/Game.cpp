@@ -1,7 +1,6 @@
 #include "Game.h"
 #include <cstdio>
 #include <new>
-#include "ImageExport.h"
 
 Game::Game() : currentState(GameState::MENU),
                exitGame(false),
@@ -30,7 +29,7 @@ Game::Game() : currentState(GameState::MENU),
     // ConvertAllAssetsToCode("assets");
 
     // Simple one-liner to load texture with code fallback
-    backgroundTexture = LoadTextureWithCodeFallback("assets/insbg.gif");
+    backgroundTexture = LoadTexture("assets/insbg.gif");
 
     // Initialize health bars
     player1HealthBar = {

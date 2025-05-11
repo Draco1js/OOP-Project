@@ -295,8 +295,8 @@ void Player::Draw()
         const auto& anim = charData.animations.at(animKey);
         Texture2D texture = anim.frames[currentFrame];
         
-        // Calculate scale and position
-        float scale = charData.scale;
+        // // Calculate scale and position
+        // float scale = charData.scale;
         
         // Flip texture based on facing direction
         Rectangle source = { 0, 0, (float)texture.width, (float)texture.height };

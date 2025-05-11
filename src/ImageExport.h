@@ -15,4 +15,4 @@ Image LoadImageWithCodeFallback(const char *imagePath);
 void ConvertAllAssetsToCode(const char *directory);
 
 // Drop-in replacement for LoadImage that uses code when available
-Texture2D LoadTextureWithCodeFallback(const char *imagePath);
+Texture2D LoadTexture(const char *imagePath);
