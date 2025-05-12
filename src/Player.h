@@ -62,6 +62,7 @@ public:
 	float GetY() const { return y; }
 	float GetVelocityX() const { return velocityX; }
 	float GetVelocityY() const { return velocityY; }
+	float GetSpecialMeter() const { return specialMeter; }
 
 private:
 	float x, y;
