@@ -6,6 +6,7 @@
 #include <map>
 #include <vector>
 #include <filesystem>
+#include <cmath> // Add this for fabs
 
 // Animation frame data structure
 struct AnimationData
