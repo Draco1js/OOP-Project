@@ -179,6 +179,12 @@ void Player::Update()
             shouldUpdateAnimation = false;
         }
         
+        // Special case for blocking - don't loop animation, stay on last frame
+        if (currentState == State::BLOCKING && currentFrame >= anim.frames.size() - 1)
+        {
+            shouldUpdateAnimation = false;
+        }
+        
         // Special case for death animation
         if (currentState == State::HURT && health <= 0)
         {
@@ -247,7 +253,23 @@ void Player::Update()
         }
 
         // Reset blocking state - will be set if block button is pressed
-        isBlocking = false;
+        // Only reset blocking if the block button is released
+        if (currentState == State::BLOCKING)
+        {
+            bool blockButtonPressed = (IsKeyDown(KEY_B) && isPlayer1) || 
+                                     (IsKeyDown(KEY_M) && !isPlayer1);
+            
+            if (!blockButtonPressed)
+            {
+                isBlocking = false;
+                currentState = State::IDLE;
+                currentFrame = 0; // Reset animation frame
+            }
+        }
+        else
+        {
+            isBlocking = false;
+        }
 
         // Check for ducking first
         bool wantsToDuck = (IsKeyDown(KEY_S) && isPlayer1) ||
@@ -255,7 +277,7 @@ void Player::Update()
 
         Duck(wantsToDuck);
 
-        // Dedicated blocking button (B)
+        // Dedicated blocking button (B) - only if not ducking and not jumping
         if (
             ((IsKeyDown(KEY_B) && isPlayer1) ||
              (IsKeyDown(KEY_M) && !isPlayer1)) &&
@@ -630,9 +652,13 @@ void Player::Duck(bool shouldDuck)
 
 void Player::Block()
 {
-    isBlocking = true;
-    currentState = State::BLOCKING;
-    currentFrame = 0; // Reset animation frame
+    // Only allow blocking if not ducking and not jumping
+    if (!isDucking && !isJumping)
+    {
+        isBlocking = true;
+        currentState = State::BLOCKING;
+        currentFrame = 0; // Reset animation frame
+    }
 }
 
 void Player::Punch()

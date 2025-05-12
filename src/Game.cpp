@@ -216,12 +216,12 @@ void Game::UpdateGameplay()
     // Check if a winner has been determined
     if (winner != 0)
     {
-        // Handle return to menu when Enter is pressed
+        // Handle restart when Enter is pressed
         if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))
         {
-            ResetGameplay();
-            currentState = GameState::MENU;
-            PlayMusicStream(mainTrack1); // Restart menu music
+            ResetGameplay(); // Reset the game state but stay in gameplay mode
+            // Don't change to menu: currentState = GameState::MENU;
+            // Don't restart menu music: PlayMusicStream(mainTrack1);
         }
         return; // Skip the rest of gameplay logic if we have a winner
     }
@@ -414,17 +414,37 @@ void Game::DrawMenu()
              static_cast<int>(exitButton.y + exitButton.height / 2 - 10),
              20, WHITE);
 
-    // Draw keyboard controls hint
-    DrawText("Use UP/DOWN arrows or W/S to navigate",
-             screenWidth / 2 - MeasureText("Use UP/DOWN arrows or W/S to navigate", 15) / 2,
-             screenHeight - 60, 15, WHITE);
-    DrawText("Press ENTER or SPACE to select",
-             screenWidth / 2 - MeasureText("Press ENTER or SPACE to select", 15) / 2,
-             screenHeight - 40, 15, WHITE);
-    DrawText("Press P to pause/resume music",
-             screenWidth / 2 - MeasureText("Press P to pause/resume music", 15) / 2,
-             screenHeight - 20, 15, WHITE);
+    // Create a semi-transparent panel for controls info
+    DrawRectangle(screenWidth / 2 - 200, screenHeight - 140, 400, 120, ColorAlpha(BLACK, 0.7f));
+    
+    // Draw controls header
+    DrawText("CONTROLS", 
+             screenWidth / 2 - MeasureText("CONTROLS", 18) / 2,
+             screenHeight - 135, 18, GOLD);
+    
+    // Draw keyboard controls with improved formatting
+    DrawText("Navigation: UP/DOWN arrows or W/S",
+             screenWidth / 2 - 180,
+             screenHeight - 110, 15, WHITE);
              
+    DrawText("Select: ENTER or SPACE",
+             screenWidth / 2 - 180,
+             screenHeight - 90, 15, WHITE);
+             
+    DrawText("Music Toggle: P",
+             screenWidth / 2 - 180,
+             screenHeight - 70, 15, WHITE);
+             
+    DrawText("Debug Mode: BACKSLASH (\\)",
+             screenWidth / 2 - 180,
+             screenHeight - 50, 15, WHITE);
+             
+    // Display debug mode status
+    const char* debugStatus = debugMode ? "ON" : "OFF";
+    DrawText(TextFormat("Debug Mode: %s", debugStatus),
+             screenWidth / 2 + 50,
+             screenHeight - 50, 15, debugMode ? GREEN : GRAY);
+    
     // Display debug information if enabled
     if (debugMode)
     {
@@ -432,7 +452,7 @@ void Game::DrawMenu()
         DrawRectangle(10, screenHeight - 130, 300, 120, ColorAlpha(BLACK, 0.5f));
         
         // Draw debug mode status
-        DrawText("Debug Mode: ON (Press F1 to toggle)", 20, screenHeight - 120, 16, YELLOW);
+        DrawText("Debug Mode: ON (Press \\ to toggle)", 20, screenHeight - 120, 16, YELLOW);
         
         // Draw FPS counter
         DrawText(TextFormat("FPS: %d", GetFPS()), 20, screenHeight - 100, 16, GREEN);
@@ -502,10 +522,15 @@ void Game::DrawGameplay()
                  GetScreenWidth() / 2 - MeasureText(winnerText, 30) / 2,
                  GetScreenHeight() / 2 - 30, 30, winnerColor);
 
-        // Display instruction to return to menu
-        DrawText("Press ENTER to return to menu",
-                 GetScreenWidth() / 2 - MeasureText("Press ENTER to return to menu", 20) / 2,
+        // Display instruction to restart the game
+        DrawText("Press ENTER to play again",
+                 GetScreenWidth() / 2 - MeasureText("Press ENTER to play again", 20) / 2,
                  GetScreenHeight() / 2 + 20, 20, WHITE);
+                 
+        // Display instruction to return to menu
+        DrawText("Press ESC to return to menu",
+                 GetScreenWidth() / 2 - MeasureText("Press ESC to return to menu", 16) / 2,
+                 GetScreenHeight() / 2 + 50, 16, LIGHTGRAY);
     }
     
     // Display debug information if enabled
@@ -515,7 +540,7 @@ void Game::DrawGameplay()
         DrawRectangle(10, screenHeight - 130, 300, 120, ColorAlpha(BLACK, 0.5f));
         
         // Draw debug mode status
-        DrawText("Debug Mode: ON (Press F1 to toggle)", 20, screenHeight - 120, 16, YELLOW);
+        DrawText("Debug Mode: ON (Press \\ to toggle)", 20, screenHeight - 120, 16, YELLOW);
         
         // Draw FPS counter
         DrawText(TextFormat("FPS: %d", GetFPS()), 20, screenHeight - 100, 16, GREEN);
@@ -620,6 +645,42 @@ void Game::DrawHealthBars()
              static_cast<int>(player2HealthBar.x + 5),
              static_cast<int>(player2HealthBar.y + 2),
              16, WHITE);
+             
+    // Add special meter bars below health bars
+    
+    // Player 1 special meter
+    float p1SpecialMeter = player1.GetSpecialMeter();
+    float p1SpecialPercent = p1SpecialMeter / 200.0f;
+    
+    Rectangle p1SpecialBarBg = {
+        player1HealthBar.x,
+        player1HealthBar.y + player1HealthBar.height + 5,
+        player1HealthBar.width,
+        10.0f
+    };
+    
+    Rectangle p1SpecialBarFg = p1SpecialBarBg;
+    p1SpecialBarFg.width *= p1SpecialPercent;
+    
+    DrawRectangleRec(p1SpecialBarBg, DARKGRAY);
+    DrawRectangleRec(p1SpecialBarFg, GOLD);
+    
+    // Player 2 special meter
+    float p2SpecialMeter = player2.GetSpecialMeter();
+    float p2SpecialPercent = p2SpecialMeter / 200.0f;
+    
+    Rectangle p2SpecialBarBg = {
+        player2HealthBar.x,
+        player2HealthBar.y + player2HealthBar.height + 5,
+        player2HealthBar.width,
+        10.0f
+    };
+    
+    Rectangle p2SpecialBarFg = p2SpecialBarBg;
+    p2SpecialBarFg.width *= p2SpecialPercent;
+    
+    DrawRectangleRec(p2SpecialBarBg, DARKGRAY);
+    DrawRectangleRec(p2SpecialBarFg, GOLD);
 }
 
 void Game::ResetGameplay()
