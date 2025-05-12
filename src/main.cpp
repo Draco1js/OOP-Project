@@ -12,7 +12,7 @@ int main()
     SetTargetFPS(60);
     SetExitKey(KEY_NULL);
 
-    Game game;  
+    Game game;
 
     while (!WindowShouldClose() && !game.IsExitGame())
     {

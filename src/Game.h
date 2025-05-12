@@ -2,7 +2,7 @@
 #include "raylib.h"
 #include "Loader.h"
 #include "Player.h"
-#include<string>
+#include <string>
 
 class Game
 {
@@ -10,8 +10,7 @@ public:
     enum class GameState
     {
         MENU,
-        GAMEPLAY,
-        GAMEOVER
+        GAMEPLAY
     };
 
     Game();
@@ -31,16 +30,16 @@ private:
     Player player1; // First player (WASD controls)
     Player player2; // Second player (Arrow keys)
     int winner;     // 1 for player1, 2 for player2, 0 for no winner yet
-    float gameOverDelay;
-    const float GAME_OVER_DELAY = 3.0f;
+    bool debugMode; // Debug mode toggle
 
     // Menu variables
     Rectangle playButton;
     Rectangle exitButton;
     int selectedButton; // 0 = play, 1 = exit
 
-    // Background texture
-    Texture2D backgroundTexture;
+    // Background textures
+    Texture2D backgroundTexture;  // Menu background
+    Texture2D levelBackgroundTexture;  // Level background
 
     // Background crowd sound
     Music crowdSound;

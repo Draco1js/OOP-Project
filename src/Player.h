@@ -25,7 +25,7 @@ public:
 
 	// Update and draw
 	void Update();
-	void Draw();
+	void Draw(bool debugMode = false);
 
 	// Actions
 	void Move(float direction);
@@ -57,6 +57,12 @@ public:
 	State GetCurrentState() const;
 	bool IsFacingRight() const;
 
+	// Add these getter methods to the Player class
+	float GetX() const { return x; }
+	float GetY() const { return y; }
+	float GetVelocityX() const { return velocityX; }
+	float GetVelocityY() const { return velocityY; }
+
 private:
 	float x, y;
 	float velocityX, velocityY;
@@ -80,9 +86,9 @@ private:
 	float frameTimer;		   // Add this
 
 	// Constants
-	const float MOVE_SPEED = 5.0f;
-	const float JUMP_FORCE = -15.0f;
-	const float GRAVITY = 0.8f;
-	const float ATTACK_DURATION = 0.3f;	  // seconds
+	const float MOVE_SPEED = 6.0f; // Increased from 5.0f for better movement with larger sprites
+	const float JUMP_FORCE = -20.0f; // Increased from -15.0f for higher jumps
+	const float GRAVITY = 1.0f; // Increased from 0.8f for better physics with larger sprites
+	const float ATTACK_DURATION = 0.3f;
 	const float DUCK_HEIGHT_RATIO = 0.6f; // Height when ducking
 };

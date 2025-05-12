@@ -4,10 +4,10 @@
 
 Game::Game() : currentState(GameState::MENU),
                exitGame(false),
-               player1(100, 400, true),
-               player2(600, 400, false),
+               player1(150, GetScreenHeight() - 50 - 120, true), // Adjusted for new height
+               player2(550, GetScreenHeight() - 50 - 120, false), // Adjusted for new height
                winner(0),
-               gameOverDelay(0.0f),
+               debugMode(false), // Initialize debug mode to off
                selectedButton(0),
                isMainTrackPaused(false),
                startDelay(3.0f) // Initialize 3-second delay
@@ -28,11 +28,11 @@ Game::Game() : currentState(GameState::MENU),
         200.0f,
         50.0f};
 
-    // Convert all assets to code on first run (optional)
-    // ConvertAllAssetsToCode("assets");
-
-    // Simple one-liner to load texture with code fallback
+    // Load menu background texture
     backgroundTexture = LoadGameTexture("assets/insbg.gif");
+    
+    // Load level background texture
+    levelBackgroundTexture = LoadGameTexture("assets/lvlbg.png");
 
     // Initialize health bars
     player1HealthBar = {
@@ -74,6 +74,7 @@ Game::~Game()
 {
     // Unload textures
     UnloadTexture(backgroundTexture);
+    UnloadTexture(levelBackgroundTexture);
 
     // Unload crowd sound
     UnloadMusicStream(crowdSound);
@@ -108,6 +109,12 @@ bool Game::IsExitGame()
 
 void Game::Update()
 {
+    // Toggle debug mode with Backslash key
+    if (IsKeyPressed(KEY_BACKSLASH))
+    {
+        debugMode = !debugMode;
+    }
+
     switch (currentState)
     {
     case GameState::MENU:
@@ -115,9 +122,6 @@ void Game::Update()
         break;
     case GameState::GAMEPLAY:
         UpdateGameplay();
-        break;
-    case GameState::GAMEOVER:
-        UpdateGameOver();
         break;
     }
 }
@@ -195,15 +199,12 @@ void Game::UpdateGameplay()
     // Handle 3-second start delay
     if (startDelay > 0.0f)
     {
+        startDelay -= GetFrameTime();
+
         if (startDelay == 3.0f) // Play start sound only once
         {
             PlaySound(startSound);
         }
-
-        char countdownText[32];
-        std::snprintf(countdownText, sizeof(countdownText), "Starting in: %.1f", startDelay);
-        DrawText(countdownText, GetScreenWidth() / 2 - MeasureText(countdownText, 20) / 2, GetScreenHeight() / 2, 20, WHITE);
-        startDelay -= GetFrameTime();
 
         if (startDelay <= 0.0f)
         {
@@ -212,6 +213,20 @@ void Game::UpdateGameplay()
         return; // Skip gameplay logic until delay is over
     }
 
+    // Check if a winner has been determined
+    if (winner != 0)
+    {
+        // Handle return to menu when Enter is pressed
+        if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))
+        {
+            ResetGameplay();
+            currentState = GameState::MENU;
+            PlayMusicStream(mainTrack1); // Restart menu music
+        }
+        return; // Skip the rest of gameplay logic if we have a winner
+    }
+
+    // Update players
     player1.Update();
     player2.Update();
 
@@ -224,8 +239,8 @@ void Game::UpdateGameplay()
         // Handle collision (could implement pushing or damage)
     }
 
-    // Check if any player has zero health
-    if (player1.GetHealth() <= 0 || player2.GetHealth() <= 0)
+    // Check if any player has zero health and winner hasn't been determined yet
+    if ((player1.GetHealth() <= 0 || player2.GetHealth() <= 0) && winner == 0)
     {
         // Play end sound
         PlaySound(endSound);
@@ -239,24 +254,6 @@ void Game::UpdateGameplay()
         {
             winner = 1; // Player 1 wins
         }
-
-        // Start the delay timer instead of immediately changing state
-        gameOverDelay = GAME_OVER_DELAY;
-    }
-
-    // Update game over delay timer if active
-    if (gameOverDelay > 0)
-    {
-        char timerText[32];
-        std::snprintf(timerText, sizeof(timerText), "Timer: %.1f", gameOverDelay);
-        DrawText(timerText, 200, 200, 12, WHITE);
-        gameOverDelay -= GetFrameTime();
-        if (gameOverDelay <= 0)
-        {
-            // Now transition to game over screen after delay
-            currentState = GameState::GAMEOVER;
-        }
-        gameOverDelay -= 1.0f;
     }
 
     // Return to menu and reset game state
@@ -264,6 +261,7 @@ void Game::UpdateGameplay()
     {
         ResetGameplay();
         currentState = GameState::MENU;
+        PlayMusicStream(mainTrack1); // Restart menu music
     }
 
     // Update crowd sound
@@ -360,9 +358,6 @@ void Game::Draw()
     case GameState::GAMEPLAY:
         DrawGameplay();
         break;
-    case GameState::GAMEOVER:
-        DrawGameOver();
-        break;
     }
 }
 
@@ -426,19 +421,140 @@ void Game::DrawMenu()
     DrawText("Press ENTER or SPACE to select",
              screenWidth / 2 - MeasureText("Press ENTER or SPACE to select", 15) / 2,
              screenHeight - 40, 15, WHITE);
+    DrawText("Press P to pause/resume music",
+             screenWidth / 2 - MeasureText("Press P to pause/resume music", 15) / 2,
+             screenHeight - 20, 15, WHITE);
+             
+    // Display debug information if enabled
+    if (debugMode)
+    {
+        // Create a semi-transparent background for debug info
+        DrawRectangle(10, screenHeight - 130, 300, 120, ColorAlpha(BLACK, 0.5f));
+        
+        // Draw debug mode status
+        DrawText("Debug Mode: ON (Press F1 to toggle)", 20, screenHeight - 120, 16, YELLOW);
+        
+        // Draw FPS counter
+        DrawText(TextFormat("FPS: %d", GetFPS()), 20, screenHeight - 100, 16, GREEN);
+        
+        // Draw game state
+        DrawText("Game State: MENU", 20, screenHeight - 80, 16, WHITE);
+        
+        // Draw selected button info
+        DrawText(TextFormat("Selected Button: %s", selectedButton == 0 ? "PLAY" : "EXIT"), 
+                 20, screenHeight - 60, 16, WHITE);
+                 
+        // Draw music state
+        DrawText(TextFormat("Music: %s", isMainTrackPaused ? "PAUSED" : "PLAYING"), 
+                 20, screenHeight - 40, 16, WHITE);
+    }
 }
 
 void Game::DrawGameplay()
 {
-    // Draw both players
-    player1.Draw();
-    player2.Draw();
+    // Draw level background with scaling to fit screen
+    int screenWidth = GetScreenWidth();
+    int screenHeight = GetScreenHeight();
+
+    // Calculate scaling factors to fit the screen
+    float scaleX = (float)screenWidth / levelBackgroundTexture.width;
+    float scaleY = (float)screenHeight / levelBackgroundTexture.height;
+    float scale = scaleX > scaleY ? scaleX : scaleY;
+
+    // Draw the scaled background
+    DrawTextureEx(levelBackgroundTexture, {0, 0}, 0.0f, scale, WHITE);
+
+    // Draw both players with debug mode
+    player1.Draw(debugMode);
+    player2.Draw(debugMode);
 
     // Draw health bars
     DrawHealthBars();
 
     // Draw ground line
-    DrawLine(0, GetScreenHeight() - 50, GetScreenWidth(), GetScreenHeight() - 50, BLACK);
+    if (debugMode)
+    {
+        DrawLine(0, GetScreenHeight() - 50, GetScreenWidth(), GetScreenHeight() - 50, BLACK);
+    }
+    
+    // Draw countdown text during start delay
+    if (startDelay > 0.0f)
+    {
+        char countdownText[32];
+        std::snprintf(countdownText, sizeof(countdownText), "Starting in: %.1f", startDelay);
+        DrawText(countdownText, GetScreenWidth() / 2 - MeasureText(countdownText, 20) / 2, 
+                 GetScreenHeight() / 2, 20, WHITE);
+    }
+    
+    // Draw winner text and return to menu instructions if we have a winner
+    if (winner != 0)
+    {
+        // Create semi-transparent overlay
+        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), 
+                      ColorAlpha(BLACK, 0.7f));
+                      
+        // Display winner text
+        char winnerText[32];
+        std::snprintf(winnerText, sizeof(winnerText), "PLAYER %d WINS!", winner);
+
+        Color winnerColor = (winner == 1) ? RED : BLUE;
+        DrawText(winnerText,
+                 GetScreenWidth() / 2 - MeasureText(winnerText, 30) / 2,
+                 GetScreenHeight() / 2 - 30, 30, winnerColor);
+
+        // Display instruction to return to menu
+        DrawText("Press ENTER to return to menu",
+                 GetScreenWidth() / 2 - MeasureText("Press ENTER to return to menu", 20) / 2,
+                 GetScreenHeight() / 2 + 20, 20, WHITE);
+    }
+    
+    // Display debug information if enabled
+    if (debugMode)
+    {
+        // Create a semi-transparent background for debug info
+        DrawRectangle(10, screenHeight - 130, 300, 120, ColorAlpha(BLACK, 0.5f));
+        
+        // Draw debug mode status
+        DrawText("Debug Mode: ON (Press F1 to toggle)", 20, screenHeight - 120, 16, YELLOW);
+        
+        // Draw FPS counter
+        DrawText(TextFormat("FPS: %d", GetFPS()), 20, screenHeight - 100, 16, GREEN);
+        
+        // Draw game state
+        DrawText("Game State: GAMEPLAY", 20, screenHeight - 80, 16, WHITE);
+        
+        // Draw player information
+        char p1Info[64];
+        char p2Info[64];
+        std::snprintf(p1Info, sizeof(p1Info), "P1: x=%.1f, y=%.1f, vx=%.1f, vy=%.1f", 
+                     player1.GetX(), player1.GetY(), player1.GetVelocityX(), player1.GetVelocityY());
+        std::snprintf(p2Info, sizeof(p2Info), "P2: x=%.1f, y=%.1f, vx=%.1f, vy=%.1f", 
+                     player2.GetX(), player2.GetY(), player2.GetVelocityX(), player2.GetVelocityY());
+        
+        DrawText(p1Info, 20, screenHeight - 60, 16, RED);
+        DrawText(p2Info, 20, screenHeight - 40, 16, BLUE);
+    }
+    
+    // Display debug mode toggle notification briefly
+    static bool lastDebugMode = debugMode;
+    static float notificationTimer = 0.0f;
+    
+    if (debugMode != lastDebugMode)
+    {
+        lastDebugMode = debugMode;
+        notificationTimer = 2.0f; // Show notification for 2 seconds
+    }
+    
+    if (notificationTimer > 0.0f)
+    {
+        notificationTimer -= GetFrameTime();
+        const char* debugText = debugMode ? "Debug Mode: ON" : "Debug Mode: OFF";
+        
+        // Draw notification with background
+        int textWidth = MeasureText(debugText, 24);
+        DrawRectangle(screenWidth/2 - textWidth/2 - 10, 50, textWidth + 20, 40, ColorAlpha(BLACK, 0.7f));
+        DrawText(debugText, screenWidth/2 - textWidth/2, 60, 24, YELLOW);
+    }
 }
 
 void Game::DrawGameOver()
@@ -508,12 +624,14 @@ void Game::DrawHealthBars()
 
 void Game::ResetGameplay()
 {
-    // Use the Reset method instead of placement new
-    player1.Reset(100, 400, true);
-    player2.Reset(600, 400, false);
+    // Calculate ground level position
+    float groundY = GetScreenHeight() - 50 - 120; // Adjusted for new player height
 
-    // Reset winner and delay timer
+    // Reset players at the correct ground level
+    player1.Reset(150, groundY, true);
+    player2.Reset(550, groundY, false);
+
+    // Reset winner
     winner = 0;
-    gameOverDelay = 0.0f;
     startDelay = 3.0f; // Reset start delay
 }
