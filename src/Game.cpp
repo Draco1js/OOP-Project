@@ -10,7 +10,7 @@ Game::Game() : currentState(GameState::MENU),
                debugMode(false), // Initialize debug mode to off
                selectedButton(0),
                isMainTrackPaused(false),
-               startDelay(3.0f) // Initialize 3-second delay
+               startDelay(5.0f) // Initialize 3-second delay
 {
     // Initialize menu buttons
     int screenWidth = GetScreenWidth();
@@ -288,8 +288,16 @@ void Game::UpdateGameplay()
 
 void Game::CheckAttackCollisions()
 {
+    // Track which players have been hit this frame
+    static bool player1HitThisFrame = false;
+    static bool player2HitThisFrame = false;
+    
+    // Reset hit flags at the beginning of each frame
+    if (!player1.IsAttacking()) player1HitThisFrame = false;
+    if (!player2.IsAttacking()) player2HitThisFrame = false;
+    
     // Check if player1 is hitting player2
-    if (player1.IsAttacking())
+    if (player1.IsAttacking() && !player2HitThisFrame)
     {
         Rectangle p1AttackHitbox = player1.GetAttackHitbox();
         Rectangle p2Rect = player2.GetRect();
@@ -297,17 +305,17 @@ void Game::CheckAttackCollisions()
         if (CheckCollisionRecs(p1AttackHitbox, p2Rect))
         {
             // Player 1 hit player 2
-            int damage = 5; // Reduced base damage for punch (was 10)
+            int damage = 3; // Reduced base damage for punch (was 5)
 
             // Different damage based on attack type
             if (player1.GetCurrentState() == Player::State::KICKING)
             {
-                damage = 8; // Reduced damage for kick (was 15)
+                damage = 5; // Reduced damage for kick (was 8)
                 PlaySound(kickSound); // Play kick sound
             }
             else if (player1.GetCurrentState() == Player::State::SPECIAL_ATTACK)
             {
-                damage = 15; // Reduced special attack damage (was 30)
+                damage = 10; // Reduced special attack damage (was 15)
                 PlaySound(kickSound); // Use kick sound for now
             }
             else
@@ -323,12 +331,13 @@ void Game::CheckAttackCollisions()
             {
                 // Pass the direction the attack is coming from (player1's facing direction)
                 player2.TakeDamage(damage, player1.IsFacingRight());
+                player2HitThisFrame = true;
             }
         }
     }
 
     // Check if player2 is hitting player1
-    if (player2.IsAttacking())
+    if (player2.IsAttacking() && !player1HitThisFrame)
     {
         Rectangle p2AttackHitbox = player2.GetAttackHitbox();
         Rectangle p1Rect = player1.GetRect();
@@ -336,17 +345,17 @@ void Game::CheckAttackCollisions()
         if (CheckCollisionRecs(p2AttackHitbox, p1Rect))
         {
             // Player 2 hit player 1
-            int damage = 5; // Reduced base damage for punch (was 10)
+            int damage = 3; // Reduced base damage for punch (was 5)
 
             // Different damage based on attack type
             if (player2.GetCurrentState() == Player::State::KICKING)
             {
-                damage = 8; // Reduced damage for kick (was 15)
+                damage = 5; // Reduced damage for kick (was 8)
                 PlaySound(kickSound); // Play kick sound
             }
             else if (player2.GetCurrentState() == Player::State::SPECIAL_ATTACK)
             {
-                damage = 15; // Reduced special attack damage (was 30)
+                damage = 10; // Reduced special attack damage (was 15)
                 PlaySound(kickSound); // Use kick sound for now
             }
             else
@@ -362,6 +371,7 @@ void Game::CheckAttackCollisions()
             {
                 // Pass the direction the attack is coming from (player2's facing direction)
                 player1.TakeDamage(damage, player2.IsFacingRight());
+                player1HitThisFrame = true;
             }
         }
     }
@@ -528,9 +538,9 @@ void Game::DrawGameplay()
     // Draw countdown text during start delay
     if (startDelay > 0.0f)
     {
-        // Create a semi-transparent background for better readability
-        int countdownWidth = 300;
-        int countdownHeight = 80;
+        // Create a larger semi-transparent background for countdown and controls
+        int countdownWidth = 500;
+        int countdownHeight = 350;
         DrawRectangle(
             GetScreenWidth() / 2 - countdownWidth / 2,
             GetScreenHeight() / 2 - countdownHeight / 2,
@@ -542,16 +552,93 @@ void Game::DrawGameplay()
         char countdownText[32];
         std::snprintf(countdownText, sizeof(countdownText), "Starting in: %.1f", startDelay);
         DrawText(countdownText, 
-                 GetScreenWidth() / 2 - MeasureText(countdownText, 20) / 2, 
-                 GetScreenHeight() / 2 - 15, 
-                 20, WHITE);
+                 GetScreenWidth() / 2 - MeasureText(countdownText, 24) / 2, 
+                 GetScreenHeight() / 2 - 140, 
+                 24, WHITE);
         
         // Draw skip instruction
         const char* skipText = "Press SPACE to skip";
         DrawText(skipText,
                  GetScreenWidth() / 2 - MeasureText(skipText, 16) / 2,
-                 GetScreenHeight() / 2 + 15,
+                 GetScreenHeight() / 2 - 100,
                  16, GOLD);
+                 
+        // Draw controls header
+        DrawText("CONTROLS",
+                 GetScreenWidth() / 2 - MeasureText("CONTROLS", 22) / 2,
+                 GetScreenHeight() / 2 - 70,
+                 22, WHITE);
+        
+        // Draw divider line
+        DrawLine(
+            GetScreenWidth() / 2 - countdownWidth / 2 + 20,
+            GetScreenHeight() / 2 - 40,
+            GetScreenWidth() / 2 + countdownWidth / 2 - 20,
+            GetScreenHeight() / 2 - 40,
+            LIGHTGRAY
+        );
+        
+        // Player 1 controls (left column)
+        DrawText("PLAYER 1", 
+                 GetScreenWidth() / 2 - countdownWidth / 2 + 50, 
+                 GetScreenHeight() / 2 - 20, 
+                 20, RED);
+        
+        DrawText("Move: W A S D", 
+                 GetScreenWidth() / 2 - countdownWidth / 2 + 50, 
+                 GetScreenHeight() / 2 + 10, 
+                 16, WHITE);
+                 
+        DrawText("Block: B", 
+                 GetScreenWidth() / 2 - countdownWidth / 2 + 50, 
+                 GetScreenHeight() / 2 + 35, 
+                 16, WHITE);
+                 
+        DrawText("Punch: Q", 
+                 GetScreenWidth() / 2 - countdownWidth / 2 + 50, 
+                 GetScreenHeight() / 2 + 60, 
+                 16, WHITE);
+                 
+        DrawText("Kick: E", 
+                 GetScreenWidth() / 2 - countdownWidth / 2 + 50, 
+                 GetScreenHeight() / 2 + 85, 
+                 16, WHITE);
+                 
+        DrawText("Special: F", 
+                 GetScreenWidth() / 2 - countdownWidth / 2 + 50, 
+                 GetScreenHeight() / 2 + 110, 
+                 16, WHITE);
+        
+        // Player 2 controls (right column)
+        DrawText("PLAYER 2", 
+                 GetScreenWidth() / 2 + 50, 
+                 GetScreenHeight() / 2 - 20, 
+                 20, BLUE);
+        
+        DrawText("Move: Arrow Keys", 
+                 GetScreenWidth() / 2 + 50, 
+                 GetScreenHeight() / 2 + 10, 
+                 16, WHITE);
+                 
+        DrawText("Block: M", 
+                 GetScreenWidth() / 2 + 50, 
+                 GetScreenHeight() / 2 + 35, 
+                 16, WHITE);
+                 
+        DrawText("Punch: ,", 
+                 GetScreenWidth() / 2 + 50, 
+                 GetScreenHeight() / 2 + 60, 
+                 16, WHITE);
+                 
+        DrawText("Kick: .", 
+                 GetScreenWidth() / 2 + 50, 
+                 GetScreenHeight() / 2 + 85, 
+                 16, WHITE);
+                 
+        DrawText("Special: /", 
+                 GetScreenWidth() / 2 + 50, 
+                 GetScreenHeight() / 2 + 110, 
+                 16, WHITE);
     }
     
     // Draw winner text and return to menu instructions if we have a winner
@@ -742,5 +829,5 @@ void Game::ResetGameplay()
 
     // Reset winner
     winner = 0;
-    startDelay = 3.0f; // Reset start delay
+    startDelay = 5.0f; // Reset start delay
 }
