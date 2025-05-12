@@ -3,6 +3,7 @@
 main
 game
 player
+loader
 ImageExport
 .DS_Store
 build

@@ -8,5 +8,8 @@
 		"**/*.o": true,
 		"**/*.exe": true,
 	},
-	"cmake.ignoreCMakeListsMissing": true
+	"cmake.ignoreCMakeListsMissing": true,
+	"files.associations": {
+		"map": "cpp"
+	}
 }
