@@ -664,20 +664,28 @@ void Player::Block()
 
 void Player::Punch()
 {
-    attackTimer = ATTACK_DURATION;
-    currentState = State::PUNCHING;
-    currentFrame = 0; // Reset animation frame
-    // Add a small amount to special meter
-    specialMeter = std::min(specialMeter + 5.0f, 200.0f);
+    // Only allow punching if not already attacking
+    if (attackTimer <= 0)
+    {
+        attackTimer = ATTACK_DURATION;
+        currentState = State::PUNCHING;
+        currentFrame = 0; // Reset animation frame
+        // Add a small amount to special meter
+        specialMeter = std::min(specialMeter + 5.0f, 200.0f);
+    }
 }
 
 void Player::Kick()
 {
-    attackTimer = ATTACK_DURATION * 1.5f; // Kicks last longer
-    currentState = State::KICKING;
-    currentFrame = 0; // Reset animation frame
-    // Add a small amount to special meter
-    specialMeter = std::min(specialMeter + 7.0f, 200.0f);
+    // Only allow kicking if not already attacking
+    if (attackTimer <= 0)
+    {
+        attackTimer = ATTACK_DURATION * 1.5f; // Kicks last longer
+        currentState = State::KICKING;
+        currentFrame = 0; // Reset animation frame
+        // Add a small amount to special meter
+        specialMeter = std::min(specialMeter + 7.0f, 200.0f);
+    }
 }
 
 void Player::SpecialAttack()

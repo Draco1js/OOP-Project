@@ -199,16 +199,27 @@ void Game::UpdateGameplay()
     // Handle 3-second start delay
     if (startDelay > 0.0f)
     {
-        startDelay -= GetFrameTime();
-
-        if (startDelay == 3.0f) // Play start sound only once
+        // Play start sound only at the beginning
+        static bool soundPlayed = false;
+        if (!soundPlayed)
         {
             PlaySound(startSound);
+            soundPlayed = true;
+        }
+        
+        startDelay -= GetFrameTime();
+
+        // Add ability to skip timer with space key
+        if (IsKeyPressed(KEY_SPACE))
+        {
+            startDelay = 0.0f;
+            StopSound(startSound);
         }
 
         if (startDelay <= 0.0f)
         {
             startDelay = 0.0f; // Ensure it doesn't go negative
+            soundPlayed = false; // Reset for next round
         }
         return; // Skip gameplay logic until delay is over
     }
@@ -220,9 +231,16 @@ void Game::UpdateGameplay()
         if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))
         {
             ResetGameplay(); // Reset the game state but stay in gameplay mode
-            // Don't change to menu: currentState = GameState::MENU;
-            // Don't restart menu music: PlayMusicStream(mainTrack1);
         }
+        
+        // Add this code to handle ESC key when there's a winner
+        if (IsKeyPressed(KEY_ESCAPE))
+        {
+            ResetGameplay();
+            currentState = GameState::MENU;
+            PlayMusicStream(mainTrack1); // Restart menu music
+        }
+        
         return; // Skip the rest of gameplay logic if we have a winner
     }
 
@@ -279,13 +297,18 @@ void Game::CheckAttackCollisions()
         if (CheckCollisionRecs(p1AttackHitbox, p2Rect))
         {
             // Player 1 hit player 2
-            int damage = 5;
+            int damage = 5; // Reduced base damage for punch (was 10)
 
             // Different damage based on attack type
             if (player1.GetCurrentState() == Player::State::KICKING)
             {
-                damage = 7;
+                damage = 8; // Reduced damage for kick (was 15)
                 PlaySound(kickSound); // Play kick sound
+            }
+            else if (player1.GetCurrentState() == Player::State::SPECIAL_ATTACK)
+            {
+                damage = 15; // Reduced special attack damage (was 30)
+                PlaySound(kickSound); // Use kick sound for now
             }
             else
             {
@@ -313,13 +336,18 @@ void Game::CheckAttackCollisions()
         if (CheckCollisionRecs(p2AttackHitbox, p1Rect))
         {
             // Player 2 hit player 1
-            int damage = 5;
+            int damage = 5; // Reduced base damage for punch (was 10)
 
             // Different damage based on attack type
             if (player2.GetCurrentState() == Player::State::KICKING)
             {
-                damage = 7;
+                damage = 8; // Reduced damage for kick (was 15)
                 PlaySound(kickSound); // Play kick sound
+            }
+            else if (player2.GetCurrentState() == Player::State::SPECIAL_ATTACK)
+            {
+                damage = 15; // Reduced special attack damage (was 30)
+                PlaySound(kickSound); // Use kick sound for now
             }
             else
             {
@@ -500,10 +528,30 @@ void Game::DrawGameplay()
     // Draw countdown text during start delay
     if (startDelay > 0.0f)
     {
+        // Create a semi-transparent background for better readability
+        int countdownWidth = 300;
+        int countdownHeight = 80;
+        DrawRectangle(
+            GetScreenWidth() / 2 - countdownWidth / 2,
+            GetScreenHeight() / 2 - countdownHeight / 2,
+            countdownWidth, countdownHeight,
+            ColorAlpha(BLACK, 0.7f)
+        );
+        
+        // Draw countdown timer
         char countdownText[32];
         std::snprintf(countdownText, sizeof(countdownText), "Starting in: %.1f", startDelay);
-        DrawText(countdownText, GetScreenWidth() / 2 - MeasureText(countdownText, 20) / 2, 
-                 GetScreenHeight() / 2, 20, WHITE);
+        DrawText(countdownText, 
+                 GetScreenWidth() / 2 - MeasureText(countdownText, 20) / 2, 
+                 GetScreenHeight() / 2 - 15, 
+                 20, WHITE);
+        
+        // Draw skip instruction
+        const char* skipText = "Press SPACE to skip";
+        DrawText(skipText,
+                 GetScreenWidth() / 2 - MeasureText(skipText, 16) / 2,
+                 GetScreenHeight() / 2 + 15,
+                 16, GOLD);
     }
     
     // Draw winner text and return to menu instructions if we have a winner
