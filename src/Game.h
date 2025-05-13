@@ -49,6 +49,7 @@ private:
     Sound kickSound;  // Sound effect for kicks
     Sound startSound; // Sound effect for game start
     Sound endSound;   // Sound effect for game end
+    Sound confirmSound;
 
     // Music for the main menu
     Music mainTrack1;

@@ -12,8 +12,8 @@
 - [x] BUG: Player 0 (blue) wins every time
 - [x] BUG: Blocking is buggy when crouching, refactor to have separate key
 - [x] BUG: Duck-punch does not work
-- [ ] BUG: Duck attack not working
-- [ ] BUG: Some animation states not resetting to idle
+- [x] BUG: Duck attack not working
+- [x] BUG: Some animation states not resetting to idle
 
 ### Members:
 
@@ -24,38 +24,47 @@
 ### Project Work Division:
 
 - Devish:
-    - Setup movement controls
-    - Setup Fonts and Menus
-    - VSCode configurations
+  - Setup movement controls
+  - Setup Fonts and Menus
+  - VSCode configurations
 - Zumair:
-    - Game Loop
-    - Game Scenes
-    - Window Creation
-    - Main class architecture
+  - Game Loop
+  - Game Scenes
+  - Window Creation
+  - Main class architecture
 - Aayan:
-    - Setup player mechanics
-    - Setup hitboxes
-    - Setup Physics
-    - Setup Fighting mechanics
-    - CI/CD pipeline 
+  - Setup player mechanics
+  - Setup hitboxes
+  - Setup Physics
+  - Setup Fighting mechanics
+  - CI/CD pipeline
 
+### Media
+
+- The main menu
+  - ![Game Menu](/assets//README/Game_Menu.png)
+- Start Timer
+  - ![Starting timer](/assets//README/Starting_timer.png)
+- Main level/arena
+  - ![Level](/assets//README/Level.png)
+- Debug mode
+  - ![Debug Menu](/assets//README/Debug_menu.png)
 
 ### UML Diagram:
-
 
 ```mermaid
 classDiagram
     direction LR
-    
+
     Main --> Game : creates
     Game *-- Player : contains 2
     Game --> GameState : uses
     Player --> State : has
-    
+
     class Main {
         +int main()
     }
-    
+
     class Game {
         -GameState currentState
         -bool exitGame
@@ -67,7 +76,7 @@ classDiagram
         -int selectedButton
         -Texture2D backgroundTexture
         -Rectangle player1HealthBar, player2HealthBar
-        
+
         +Game()
         +~Game()
         +void Update()
@@ -106,7 +115,7 @@ classDiagram
         -State currentState
         -float specialMeter
         -std::string characterName
-        
+
         +Player(float x, float y, bool isPlayer1)
         +void Update()
         +void Draw()

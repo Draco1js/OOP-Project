@@ -4,13 +4,13 @@
 
 Game::Game() : currentState(GameState::MENU),
                exitGame(false),
-               player1(150, GetScreenHeight() - 50 - 120, true), // Adjusted for new height
-               player2(550, GetScreenHeight() - 50 - 120, false), // Adjusted for new height
+               player1(150, GetScreenHeight() - 50 - 120, true),
+               player2(550, GetScreenHeight() - 50 - 120, false),
                winner(0),
-               debugMode(false), // Initialize debug mode to off
+               debugMode(false),
                selectedButton(0),
                isMainTrackPaused(false),
-               startDelay(5.0f) // Initialize 3-second delay
+               startDelay(5.0f)
 {
     // Initialize menu buttons
     int screenWidth = GetScreenWidth();
@@ -52,16 +52,18 @@ Game::Game() : currentState(GameState::MENU),
     // Load crowd sound
     InitAudioDevice();
     crowdSound = LoadMusicStream("assets/sprites/Assets/sound/Crowd.ogg");
-    SetMusicVolume(crowdSound, 0.1f); // Set volume to 10%
+    SetMusicVolume(crowdSound, 0.05f);
     PlayMusicStream(crowdSound);
 
+    
     // Load sound effects
+    confirmSound = LoadSound("assets/sprites/Assets/sound/confirm.ogg");
     punchSound = LoadSound("assets/sprites/Assets/sound/Punch.ogg");
     kickSound = LoadSound("assets/sprites/Assets/sound/Kick.ogg");
 
     // Load main menu music
     mainTrack1 = LoadMusicStream("assets/sprites/Assets/sound/MainMenu.ogg");
-    SetMusicVolume(mainTrack1, 0.2f); // Set volume to 10%
+    SetMusicVolume(mainTrack1, 0.2f);
     PlayMusicStream(mainTrack1);
 
     // Load start and end sound effects
@@ -83,6 +85,7 @@ Game::~Game()
     // Unload sound effects
     UnloadSound(punchSound);
     UnloadSound(kickSound);
+    UnloadSound(confirmSound);
 
     // Unload main menu music
     UnloadMusicStream(mainTrack1);
@@ -158,6 +161,7 @@ void Game::UpdateMenu()
     // Button activation with Enter or Space
     if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))
     {
+        PlaySound(confirmSound);
         if (selectedButton == 0)
         {
             StopMusicStream(mainTrack1); // Stop main menu music
