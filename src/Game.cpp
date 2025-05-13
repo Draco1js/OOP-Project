@@ -204,8 +204,8 @@ void Game::UpdateGameplay()
     if (startDelay > 0.0f)
     {
         // Play start sound only at the beginning
-        static bool soundPlayed = false;
-        if (!soundPlayed)
+        bool soundPlayed = false;
+        if (!soundPlayed && startDelay < 3.0f)
         {
             PlaySound(startSound);
             soundPlayed = true;
@@ -216,6 +216,7 @@ void Game::UpdateGameplay()
         // Add ability to skip timer with space key
         if (IsKeyPressed(KEY_SPACE))
         {
+            soundPlayed = true; // dont let it playa gain 
             startDelay = 0.0f;
             StopSound(startSound);
         }
@@ -427,24 +428,7 @@ void Game::DrawMenu()
     DrawRectangleRec(playButton, playButtonColor);
     DrawRectangleRec(exitButton, exitButtonColor);
 
-    // Draw selection indicator (triangle)
-    if (selectedButton == 0)
-    {
-        DrawTriangle(
-            {playButton.x - 20, playButton.y + playButton.height / 2},
-            {playButton.x - 5, playButton.y + playButton.height / 2 - 10},
-            {playButton.x - 5, playButton.y + playButton.height / 2 + 10},
-            WHITE);
-    }
-    else
-    {
-        DrawTriangle(
-            {exitButton.x - 20, exitButton.y + exitButton.height / 2},
-            {exitButton.x - 5, exitButton.y + exitButton.height / 2 - 10},
-            {exitButton.x - 5, exitButton.y + exitButton.height / 2 + 10},
-            WHITE);
-    }
-
+   
     // Draw button text
     DrawText("PLAY",
              static_cast<int>(playButton.x + playButton.width / 2 - MeasureText("PLAY", 20) / 2),

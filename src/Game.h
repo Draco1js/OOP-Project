@@ -24,7 +24,6 @@ public:
     void Draw();
 
 private:
-    // Reorder these declarations to match initialization order in constructor
     GameState currentState;
     bool exitGame;  // Move this before player1
     Player player1; // First player (WASD controls)
