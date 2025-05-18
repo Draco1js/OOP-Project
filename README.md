@@ -1,54 +1,50 @@
 # OOP Project: 2D Fighting Game with Raylib
 
-## TODO:
+This is the repository for the final project of my CS-1004 Object Oriented Programming course, a street-fighter 2d clone made with raylib in cpp. This project was completed and presented on the 13th of May 2025.
 
-- [x] FEATURE: Implement Scene Switching
-- [x] FEATURE: Implement Players
-- [x] FEATURE: Implement Enemies
-- [x] FEATURE: Implement Animation state machine
-- [x] FEATURE: Implement Fighting mechanics
-- [x] FEATURE: Animations and spritesheets
-- [x] FEATURE: CI/CD pipeline
-- [x] BUG: Player 0 (blue) wins every time
-- [x] BUG: Blocking is buggy when crouching, refactor to have separate key
-- [x] BUG: Duck-punch does not work
-- [x] BUG: Duck attack not working
-- [x] BUG: Some animation states not resetting to idle
+### Personal Objectives Set
+- Implement a 2D arcade fighter using Raylib.
+- Demonstrate OOP concepts by creating reusable Player, Loader and Game classes.
+- Achieve cross-platform compatibility (Windows, Linux, macOS).
+- Set up CI/CD for automated builds and releases.
 
-### Members:
+### Group Members and Work Division
 
 - Aayan Sultan (24K-2015)
-- Zumair Shamsi (24K-2040)
-- Devish Kumar (24K-2022)
-
-### Project Work Division:
-
-- Devish:
-  - Setup movement controls
-  - Setup Fonts and Menus
-  - VSCode configurations
-- Zumair:
-  - Game Loop
-  - Game Scenes
-  - Window Creation
-  - Main class architecture
-- Aayan:
   - Setup player mechanics
   - Setup hitboxes
   - Setup Physics
   - Setup Fighting mechanics
   - CI/CD pipeline
+- Zumair Shamsi (24K-2040)
+  - Game Loop
+  - Game Scenes
+  - Window Creation
+  - Main class architecture
+- Devish Kumar (24K-2022)
+  - Setup movement controls
+  - Setup Fonts and Menus
+  - VSCode configurations
 
 ### Media
 
 - The main menu
+  
   - ![Game Menu](/assets//README/Game_Menu.png)
 - Start Timer
+  
   - ![Starting timer](/assets//README/Starting_timer.png)
 - Main level/arena
+  
   - ![Level](/assets//README/Level.png)
 - Debug mode
+  
   - ![Debug Menu](/assets//README/Debug_menu.png)
+
+- Demo Clip
+
+https://github.com/user-attachments/assets/7cfad734-e43e-4d1b-888c-87083021f6af
+
 
 ### UML Diagram:
 
